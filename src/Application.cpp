@@ -3,7 +3,7 @@
 #include <iostream>
 
 // Vertex shader
-const char *vertexShaderSource = R"(
+const char* vertexShaderSource = R"(
 #version 330 core
 layout (location = 0) in vec3 aPos;
 void main() {
@@ -12,7 +12,7 @@ void main() {
 )";
 
 // Fragment shader
-const char *fragmentShaderSource = R"(
+const char* fragmentShaderSource = R"(
 #version 330 core
 out vec4 FragColor;
 uniform vec4 ourColor;
@@ -21,24 +21,9 @@ void main() {
 }
 )";
 
-struct Vec3
-{
-    float r, g, b;
-};
-
-Vec3 lerp(const Vec3 &a, const Vec3 &b, float t)
-{
-    return {
-        a.r * (1.0f - t) + b.r * t,
-        a.g * (1.0f - t) + b.g * t,
-        a.b * (1.0f - t) + b.b * t};
-}
-
-int main()
-{
+int main() {
     // Initialize GLFW
-    if (!glfwInit())
-    {
+    if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW\n";
         return -1;
     }
@@ -47,9 +32,8 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(800, 600, "Smooth Color Triangle", NULL, NULL);
-    if (!window)
-    {
+    GLFWwindow* window = glfwCreateWindow(800, 600, "Smooth Color Triangle", NULL, NULL);
+    if (!window) {
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
         return -1;
@@ -57,17 +41,16 @@ int main()
     glfwMakeContextCurrent(window);
 
     // Load OpenGL function pointers with GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD\n";
         return -1;
     }
 
     // Vertex data (big, centered triangle)
     float vertices[] = {
-        0.0f,  0.8f,   // Top
-        -0.8f, -0.8f, // Left
-        0.8f,  -0.8f,  // Right
+         0.0f,  0.8f, 0.0f,   // Top
+        -0.8f, -0.8f, 0.0f,   // Left
+         0.8f, -0.8f, 0.0f    // Right
     };
 
     unsigned int VBO, VAO;
@@ -79,7 +62,7 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     // Vertex Shader
@@ -102,8 +85,7 @@ int main()
     glDeleteShader(fragmentShader);
 
     // Render loop
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -112,29 +94,12 @@ int main()
         int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
 
         // Smooth time-based transition
-        float speed = 1.5f;
-        float time = (float)glfwGetTime() * speed;
+        float t = (sinf((float)glfwGetTime()) * 0.5f) + 0.5f; // 0..1
+        float r = (1.0f * (1.0f - t)) + (0.2f * t);
+        float g = (0.5f * (1.0f - t)) + (0.7f * t);
+        float b = (0.2f * (1.0f - t)) + (1.0f * t);
 
-        float t = fmod(time, 3.0f);
-        Vec3 orange = {1.0f, 0.5f, 0.0f};
-        Vec3 white = {1.0f, 1.0f, 1.0f};
-        Vec3 green = {0.0f, 1.0f, 0.0f};
-        Vec3 color;
-
-        if (t < 1.0f)
-        {
-            color = lerp(orange, white, t);
-        }
-        else if (t < 2.0f)
-        {
-            color = lerp(white, green, t - 1.0f);
-        }
-        else
-        {
-            color = lerp(green, orange, t - 2.0f);
-        }
-
-        glUniform4f(vertexColorLocation, color.r, color.g, color.b, 1.0f);
+        glUniform4f(vertexColorLocation, r, g, b, 1.0f);
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
