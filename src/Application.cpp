@@ -1,119 +1,84 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <string>
 
-// Vertex shader
-const char* vertexShaderSource = R"(
-#version 330 core
-layout (location = 0) in vec3 aPos;
-void main() {
-    gl_Position = vec4(aPos, 1.0);
-}
-)";
+static unsigned int CompiledShader(unsigned int type, const std::string& source)
+{
+    unsigned int id = glCreateShader(GL_VERTEX_SHADER);
+    const char* src = source.c_str();
+    glShaderSource(id, 1, &src, nullptr);
+    glCompileShader(id);
 
-// Fragment shader
-const char* fragmentShaderSource = R"(
-#version 330 core
-out vec4 FragColor;
-uniform vec4 ourColor;
-void main() {
-    FragColor = ourColor;
-}
-)";
-
-int main() {
-    // Initialize GLFW
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW\n";
-        return -1;
+    int result;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+    if (result == GL_FALSE)
+    {
+        int length;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        char* message = (char*)alloca(length*sizeof(char));
+        glGetShaderInfoLog(id, length, &length, message);
+        std::cerr<<message<<std::endl;
     }
+    return id;
+}
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
+{
+    unsigned int program = glCreateProgram();
+    unsigned int vs = CompiledShader(GL_VERTEX_SHADER, vertexShader);
+    unsigned int fs = CompiledShader(GL_VERTEX_SHADER, fragmentShader);
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Smooth Color Triangle", NULL, NULL);
-    if (!window) {
-        std::cerr << "Failed to create GLFW window\n";
+    glAttachShader(program, vs);
+    glAttachShader(program, fs);
+    glLinkProgram(program);
+    glValidateProgram(program);
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    return program;
+}
+
+int main(void)
+{
+    GLFWwindow *window;
+
+    if (!glfwInit())
+        return -1;
+    window = glfwCreateWindow(600, 480, "OpenGL Window", NULL, NULL);
+
+    if (!window)
+    {
         glfwTerminate();
         return -1;
     }
-    glfwMakeContextCurrent(window);
 
-    // Load OpenGL function pointers with GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "Failed to initialize GLAD\n";
-        return -1;
-    }
+    std::cout << glGetString(GL_VERSION) << std::endl;
+    float positions[6] = {
+        -0.5f, -0.5,
+        0.0f, 0.5f,
+        0.5f, -0.5f};
 
-    // Vertex data (big, centered triangle)
-    float vertices[] = {
-         0.0f,  0.8f, 0.0f,   // Top
-        -0.8f, -0.8f, 0.0f,   // Left
-         0.8f, -0.8f, 0.0f    // Right
-    };
+    unsigned int buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
 
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
-    // Vertex Shader
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    // Fragment Shader
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    // Shader Program
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    
     // Render loop
-    while (!glfwWindowShouldClose(window)) {
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    while (!glfwWindowShouldClose(window))
+    {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shaderProgram);
-
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-
-        // Smooth time-based transition
-        float t = (sinf((float)glfwGetTime()) * 0.5f) + 0.5f; // 0..1
-        float r = (1.0f * (1.0f - t)) + (0.2f * t);
-        float g = (0.5f * (1.0f - t)) + (0.7f * t);
-        float b = (0.2f * (1.0f - t)) + (1.0f * t);
-
-        glUniform4f(vertexColorLocation, r, g, b, 1.0f);
-
-        glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // Cleanup
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
-
-    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
