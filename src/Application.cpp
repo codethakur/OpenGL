@@ -2,6 +2,48 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+struct shaderProgramsource
+{
+    std::string VertexSource;
+    std::string FragmentSource;
+};
+
+static shaderProgramsource parseShader(const std::string &filepath)
+{
+    std::ifstream stream(filepath);
+
+    enum class shaderTypes
+    {
+        NONE = -1,
+        VERTEX = 0,
+        FRAGMENT = 1
+    };
+    std::string line;
+    std::stringstream ss[2];
+    shaderTypes type = shaderTypes::NONE;
+
+    while (std::getline(stream, line))
+    {
+        if (line.find("shader") != std::string::npos)
+        {
+            if (line.find("vertex") != std::string::npos)
+            {
+                type = shaderTypes::VERTEX;
+            }
+            else if (line.find("fragment") != std::string::npos)
+            {
+                type = shaderTypes::FRAGMENT;
+            }
+        }
+        else
+        {
+            ss[(int)type] << line << "\n";
+        }
+    }
+    return {ss[0].str(), ss[1].str()};
+}
 
 static unsigned int Compiledshader(unsigned int type, const std::string &source)
 {
@@ -47,14 +89,14 @@ static unsigned int Createshader(const std::string &vertexShader, const std::str
     return program;
 }
 
-int main()
+int main(void)
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(640, 480, "OpenGLWindow", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(640, 480, "OpenGL Window", NULL, NULL);
     if (!window)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -78,9 +120,12 @@ int main()
 
     // Vertex position data (x, y)
     float positions[] = {
-        -0.5f, -0.5f,
-         0.0f,  0.5f,
-         0.5f, -0.5f,
+        -0.5f,
+        -0.5f,
+        0.0f,
+        0.5f,
+        0.5f,
+        -0.5f,
     };
 
     unsigned int vbo;
@@ -92,32 +137,21 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
     glEnableVertexAttribArray(0);
 
-    std::string vertexShader = R"(
-        #version 410 core
-        layout (location = 0) in vec4 position;
+    // unsigned int shader = Createshader(vertexShader, fragmentShader);
+    // glUseProgram(shader);
 
-        void main()
-        {
-            gl_Position = position;
-        }
-    )";
+    shaderProgramsource source = parseShader("res/shaders/Basic.shader");
+    std::cout << "\n---------Vertex---------" << std::endl;
+    std::cout << source.VertexSource << std::endl;
+    std::cout << "---------Fragment---------" << std::endl;
+    std::cout << source.FragmentSource << std::endl;
 
-    std::string fragmentShader = R"(
-        #version 410 core
-        out vec4 FragColor;
+    unsigned int shader = Createshader(source.VertexSource, source.FragmentSource);
 
-        void main()
-        {
-            FragColor = vec4(1.0, 0.5, 0.2, 1.0); 
-        }
-    )";
-
-    unsigned int shader = Createshader(vertexShader, fragmentShader);
     glUseProgram(shader);
-
     while (!glfwWindowShouldClose(window))
     {
-        glClearColor(0.1f, 0.2f, 0.25f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.5f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glBindVertexArray(vao);
