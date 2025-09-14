@@ -7,6 +7,8 @@
 #include "Renderer.hpp"
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
+#include "VertexArray.hpp"
+#include "VertexBufferLayout.hpp"
 
 struct shaderProgramsource
 {
@@ -121,54 +123,41 @@ int main(void)
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
-    // VAO is required in core profile (macOS)
-    unsigned int vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
     // Vertex position data (x, y)
     float positions[] = {
         -0.5f, -0.5f, // 0
-         0.5f, -0.5f, // 1
-         0.5f,  0.5f, // 2
-        -0.5f,  0.5f  // 3
+        0.5f, -0.5f,  // 1
+        0.5f, 0.5f,   // 2
+        -0.5f, 0.5f   // 3
     };
 
     unsigned int indices[] =
-    {
-        0, 1, 2,
-        2, 3, 0
-    };
-
-    // VBO
-    unsigned int vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+        {
+            0, 1, 2,
+            2, 3, 0};
+    VertexArray va;
     VertexBuffer vb(positions, 4 * 2 * sizeof(float));
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
-    glEnableVertexAttribArray(0);
+    VertexBufferLayout layout;
+    layout.Push<float>(2); // each vertex has 2 floats (x,y)
 
-    // IBO
-    unsigned int ibo;
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+    va.addBuffer(vb, layout);
+
     IndexBuffer ib(indices, 6);
 
     // Parse and create shader
     shaderProgramsource source = parseShader("res/shaders/Basic.shader");
     std::cout << "\n---------Vertex-------------" << std::endl;
     std::cout << source.VertexSource << std::endl;
-    std::cout << "-------------Fragment-------------" << std::endl;
+    std::cout << "-------------Fragment---------" << std::endl;
     std::cout << source.FragmentSource << std::endl;
 
     unsigned int shader = Createshader(source.VertexSource, source.FragmentSource);
     glUseProgram(shader);
 
     int location = glGetUniformLocation(shader, "u_Color");
-    if (location == -1) {
+    if (location == -1)
+    {
         std::cerr << "Uniform u_Color not found or optimized out!" << std::endl;
     }
 
@@ -182,7 +171,7 @@ int main(void)
 
         glUniform4f(location, 1.0, r, 0.2, 1.0);
 
-        glBindVertexArray(vao);
+        va.Bind();
         ib.Bind();
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
