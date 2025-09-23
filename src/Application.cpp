@@ -2,94 +2,101 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include "Renderer.hpp"
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
 #include "VertexArray.hpp"
 #include "VertexBufferLayout.hpp"
 #include "Shader.hpp"
-
-
+#include "Texture.hpp"
 
 int main(void)
 {
-    glfwInit();
+    // ----------------- Init -----------------
+    if (!glfwInit())
+    {
+        std::cerr << "❗️Failed to init GLFW\n";
+        return -1;
+    }
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
 
-    GLFWwindow *window = glfwCreateWindow(640, 480, "OpenGL Window🖥️", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(640, 480, "OpenGL Window 🖥️", NULL, NULL);
     if (!window)
     {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
         return -1;
     }
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(1); // V-Sync
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+        std::cerr << "❗️Failed to init GLAD\n";
         return -1;
     }
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
-    // Vertex position data (x, y)
+    // ----------------- Vertex Data -----------------
     float positions[] = {
-        -0.5f,   -0.5f,  // 0
-         0.5f,   -0.5f,  // 1
-         0.5f,    0.5f,  // 2
-        -0.5f,    0.5f   // 3
+        //   X      Y      U     V
+        -0.5f,  -0.5f,   0.0f, 0.0f, // 0
+         0.5f,  -0.5f,   1.0f, 0.0f, // 1
+         0.5f,   0.5f,   1.0f, 1.0f, // 2
+        -0.5f,   0.5f,   0.0f, 1.0f  // 3
     };
 
-    unsigned int indices[] =
-        {
-            0, 1, 2,
-            2, 3, 0};
+    unsigned int indices[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
     VertexArray va;
-    VertexBuffer vb(positions, 4 * 2 * sizeof(float));
+    VertexBuffer vb(positions, 4 * 4 * sizeof(float));
 
     VertexBufferLayout layout;
-    layout.Push<float>(2); // each vertex has 2 floats (x,y)
-
+    layout.Push<float>(2); // position -> 2 floats
+    layout.Push<float>(2); // texCoord -> 2 floats
     va.addBuffer(vb, layout);
 
     IndexBuffer ib(indices, 6);
+
+    // ----------------- Shader -----------------
     Shader shader("res/shaders/Basic.shader");
     shader.Bind();
-    shader.setUniform4f("u_Color", 0.8f, 0.3f, 0.2f, 1.0f);
 
-    va.UnBind();
-    ib.UnBind();
-    vb.UnBind();
-    shader.UnBind();
+    // ----------------- Texture -----------------
+    Texture texture("res/textures/codethakur.png");
+    texture.Bind(0);                  // bind to slot 0
+    shader.setUniform1i("u_Texture", 0); // tell shader to use slot 0
 
+    // ----------------- Renderer -----------------
+    Renderer renderer;
     float r = 0.0f;
     float increment = 0.05f;
 
+    // ----------------- Loop -----------------
     while (!glfwWindowShouldClose(window))
     {
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(0.235f, 0.235f, 0.235f, 0.05f);
+        renderer.Clear();
 
         shader.Bind();
-        shader.setUniform4f("u_Color", 1.0, r, 0.2, 1.0);
+        texture.Bind(0);
 
-        va.Bind();  
-        ib.Bind();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        // animate color tint
+        shader.setUniform4f("u_Color", 1.0f, r, 0.2f, 1.0f);
+        
+        renderer.Draw(va, ib, shader);
 
-        // animate green component
-        if (r > 1.0f)
-            increment = -0.05f;
-        else if (r < 0.0f)
-            increment = 0.05f;
+        // animate "r"
+        if (r > 1.0f) increment = -0.05f;
+        else if (r < 0.0f) increment = 0.05f;
         r += increment;
 
         glfwSwapBuffers(window);

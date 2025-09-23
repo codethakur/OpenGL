@@ -94,7 +94,7 @@ unsigned int Shader::createShader(const std::string &vertexShader, const std::st
 
     return program;
 }
-void Shader::Bind()
+void Shader::Bind()const
 {
     GLCall(glUseProgram(m_renderedId));
 }
@@ -110,7 +110,7 @@ int Shader::getUniformLocation(const std::string &name)
     {
         return m_uniformLoactionCache[name];
     }
-    int location = glGetUniformLocation(m_renderedId, name.c_str());
+    GLCall(int location = glGetUniformLocation(m_renderedId, name.c_str()));
 
     if (location == -1)
         std::clog << "[⚠️ Warning: ] uniform '" << name << "' doesn't exits\n";

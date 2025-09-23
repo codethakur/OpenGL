@@ -42,5 +42,6 @@ void VertexArray::addBuffer(const VertexBuffer& vb, const VertexBufferLayout& la
             (const void*)(uintptr_t)offset
         );
         offset += element.count * VertexBufferElement::getSizeOfType(element.type));
+         index++;
     }
 }
