@@ -130,3 +130,16 @@ void Shader::setUniform4f(const std::string &name, float v0, float v1, float v2,
 {
     GLCall(glUniform4f(getUniformLocation(name), v0, v1, v2, v3));
 }
+
+void Shader::setUniformMat4f(const std::string &name, const glm::mat4& matrix)
+{
+    GLint loc = getUniformLocation(name);
+    if (loc == -1)
+    {
+        std::cerr << "❌ setUniformMat4f: uniform '" << name << "' not found\n";
+        return; 
+    }
+
+    glUniformMatrix4fv(loc, 1, GL_FALSE, &matrix[0][0]);
+}
+
