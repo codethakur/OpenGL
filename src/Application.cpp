@@ -93,11 +93,9 @@ int main(void)
     Renderer renderer;
     float r = 0.0f;
     float increment = 0.05f;
-    float angle = 0.0f;
-    float f = 0.0f;
-    float moveX = 0.0f;   // left-right
-    float moveY = 0.0f;   // up-down
-
+    float moveXA = -1.5f, moveYA = 0.0f, speedA = 0.0f;
+    float moveXB = 0.0f, moveYB = 0.0f, speedB = 0.0f;
+    float angleA = 0.0f, angleB = 0.0f;
      // ----------------- ImGui Setup -----------------
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -116,79 +114,94 @@ int main(void)
     // ----------------- Loop -----------------
 
     
-       while (!glfwWindowShouldClose(window))
+   while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
-        // Start ImGui frame
+        // --- ImGui Frame ---
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // ImGui Window
+        // --- ImGui Controls ---
         {
             ImGui::Begin("Hello, from ImGui");
             ImGui::Checkbox("Demo Window", &show_demo_window);
             ImGui::Checkbox("Another Window", &show_another_window);
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-            angle += f; 
-            ImGui::SliderFloat("Move X (Left-Right)", &moveX, -2.46f, 2.46f);
-            ImGui::SliderFloat("Move Y (Up-Down)", &moveY, -1.46f, 1.46f);
+
+            ImGui::Text("Object A Controls");
+            ImGui::SliderFloat("Move X A", &moveXA, -2.0f, 2.0f);
+            ImGui::SliderFloat("Move Y A", &moveYA, -1.5f, 1.5f);
+            ImGui::SliderFloat("Rotate Speed A", &speedA, -1.0f, 1.0f);
+
+            ImGui::Separator();
+
+            ImGui::Text("Object B Controls");
+            ImGui::SliderFloat("Move X B", &moveXB, -2.0f, 2.0f);
+            ImGui::SliderFloat("Move Y B", &moveYB, -1.5f, 1.5f);
+            ImGui::SliderFloat("Rotate Speed B", &speedB, -1.0f, 1.0f);
 
             ImGui::ColorEdit3("clear color", (float*)&clear_color);
-            
-            if (ImGui::Button("Reset Button"))
+
+            if (ImGui::Button("Reset All"))
             {
-                moveX = 0.0f;
-                moveY = 0.0f;
-                f = 0.0f;
-                angle = 0.0f; 
+                moveXA = -1.5f ;
+                moveYA = moveXB = moveYB = 0.0f;
+                speedA = speedB = 0.0f;
+                angleA = angleB = 0.0f;
             }
 
-                   
             ImGui::End();
 
             if (show_another_window)
             {
-                ImGui::Begin("Another Window", &show_another_window); 
+                ImGui::Begin("Another Window", &show_another_window);
                 ImGui::Text("Hello from another window!");
-                
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                             1000.0f / io.Framerate, io.Framerate);
-                
-               
-
                 ImGui::End();
             }
-
         }
 
-        // Clear background
+        // --- Logic Update ---
+        angleA += speedA;
+        angleB += speedB;
+
+        // --- Clear and Render Scene ---
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         renderer.Clear();
 
-        // Animate rotation and color
         shader.Bind();
         texture.Bind(0);
-
         shader.setUniform4f("u_Color", 1.0f, r, 0.2f, 1.0f);
-        glm::mat4 view  = glm::translate(glm::mat4(1.0f), glm::vec3(moveX, moveY, 0.0f));
-        glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
-        //glm::mat4 model = glm::mat4(1.0f);
 
-        glm::mat4 mvp = proj * view * model;
-        shader.setUniformMat4f("u_MVP", mvp);
+        glm::mat4 view = glm::mat4(1.0f); // static camera
 
-        renderer.Draw(va, ib, shader);
+        // Object A
+        glm::mat4 modelA = glm::mat4(1.0f);
+        modelA = glm::translate(modelA, glm::vec3(moveXA, moveYA, 0.0f));
+        modelA = glm::rotate(modelA, angleA, glm::vec3(0.0f, 0.0f, 1.0f));
 
-        // Animate color oscillation
-        if (r > 1.0f)
-            increment = -0.05f;
-        else if (r < 0.0f)
-            increment = 0.05f;
+        // Object B
+        glm::mat4 modelB = glm::mat4(1.0f);
+        modelB = glm::translate(modelB, glm::vec3(moveXB, moveYB, 0.0f));
+        modelB = glm::rotate(modelB, angleB, glm::vec3(0.0f, 0.0f, 1.0f));
+
+        // Render both
+        std::vector<glm::mat4> models = { modelA, modelB };
+        for (const auto& model : models)
+        {
+            glm::mat4 mvp = proj * view * model;
+            shader.setUniformMat4f("u_MVP", mvp);
+            renderer.Draw(va, ib, shader);
+        }
+
+        // --- Animate color oscillation ---
+        if (r > 1.0f) increment = -0.05f;
+        else if (r < 0.0f) increment = 0.05f;
         r += increment;
 
-        // Render ImGui over everything
+        // --- ImGui Render ---
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
