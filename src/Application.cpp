@@ -108,7 +108,7 @@ int main(void)
     ImGui_ImplOpenGL3_Init("#version 330");
 
     // ----------------- App State -----------------
-    bool show_demo_window = false;
+    bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
 
@@ -132,8 +132,8 @@ int main(void)
             ImGui::Checkbox("Another Window", &show_another_window);
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
             angle += f; 
-            ImGui::SliderFloat("Move X (Left-Right)", &moveX, -2.5f, 2.5f);
-            ImGui::SliderFloat("Move Y (Up-Down)", &moveY, -1.5f, 1.5f);
+            ImGui::SliderFloat("Move X (Left-Right)", &moveX, -2.46f, 2.46f);
+            ImGui::SliderFloat("Move Y (Up-Down)", &moveY, -1.46f, 1.46f);
 
             ImGui::ColorEdit3("clear color", (float*)&clear_color);
             
@@ -142,6 +142,7 @@ int main(void)
                 moveX = 0.0f;
                 moveY = 0.0f;
                 f = 0.0f;
+                angle = 0.0f; 
             }
 
                    
