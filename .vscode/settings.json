@@ -50,6 +50,7 @@
         "fstream": "cpp",
         "cassert": "cpp"
     },
+    "cmake.sourceDirectory": "/Users/kishanthakur/Desktop/OpneGL/src/vendor/glm",
     
 
 }

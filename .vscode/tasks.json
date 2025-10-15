@@ -13,7 +13,9 @@
 				"-g",
 				"-I${workspaceFolder}/Dependencies/include",
 				"-L${workspaceFolder}/Dependencies/library",
+				
 				"${workspaceFolder}/src/*.cpp",
+				"${workspaceFolder}/src/vendor/imgui/*.cpp",
 				"${workspaceFolder}/src/glad.c",
 				"${workspaceFolder}/Dependencies/library/libglfw.3.4.dylib",
 				"-o",
