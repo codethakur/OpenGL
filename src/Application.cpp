@@ -33,7 +33,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(640, 480, "OpenGL Window 🖥️", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(940, 680, "OpenGL Window 🖥️", NULL, NULL);
     if (!window)
     {
         std::cerr << "Failed to create GLFW window\n";
@@ -96,7 +96,10 @@ int main(void)
     float moveXA = -1.5f, moveYA = 0.0f, speedA = 0.0f;
     float moveXB = 0.0f, moveYB = 0.0f, speedB = 0.0f;
     float angleA = 0.0f, angleB = 0.0f;
-     // ----------------- ImGui Setup -----------------
+    float objectBrightness = 1.0f;     // affects u_Color intensity
+    float backgroundBrightness = 1.0f; // affects glClearColor intensity
+
+    // ----------------- ImGui Setup -----------------
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -114,7 +117,7 @@ int main(void)
     // ----------------- Loop -----------------
 
     
-   while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
@@ -135,13 +138,17 @@ int main(void)
             ImGui::SliderFloat("Rotate Speed A", &speedA, -1.0f, 1.0f);
 
             ImGui::Separator();
-
             ImGui::Text("Object B Controls");
             ImGui::SliderFloat("Move X B", &moveXB, -2.0f, 2.0f);
             ImGui::SliderFloat("Move Y B", &moveYB, -1.5f, 1.5f);
             ImGui::SliderFloat("Rotate Speed B", &speedB, -1.0f, 1.0f);
 
             ImGui::ColorEdit3("clear color", (float*)&clear_color);
+            ImGui::Separator();
+
+            ImGui::Text("Lighting Controls" );
+            ImGui::SliderFloat("Object Brightness", &objectBrightness, 0.0f, 2.0f, "%.2f");
+            ImGui::SliderFloat("Background Brightness", &backgroundBrightness, 0.0f, 2.0f, "%.2f");
 
             if (ImGui::Button("Reset All"))
             {
@@ -149,6 +156,9 @@ int main(void)
                 moveYA = moveXB = moveYB = 0.0f;
                 speedA = speedB = 0.0f;
                 angleA = angleB = 0.0f;
+                objectBrightness = 1.0f;
+                backgroundBrightness = 1.0f;
+               clear_color = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
             }
 
             ImGui::End();
@@ -168,12 +178,19 @@ int main(void)
         angleB += speedB;
 
         // --- Clear and Render Scene ---
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+        ImVec4 adjustedClearColor = clear_color * backgroundBrightness;
+        glClearColor(adjustedClearColor.x, adjustedClearColor.y, adjustedClearColor.z, adjustedClearColor.w);
         renderer.Clear();
 
+       
         shader.Bind();
         texture.Bind(0);
-        shader.setUniform4f("u_Color", 1.0f, r, 0.2f, 1.0f);
+        shader.setUniform4f("u_Color",
+                    1.0f * objectBrightness,
+                    r * objectBrightness,
+                    0.2f * objectBrightness,
+                    1.0f);
+
 
         glm::mat4 view = glm::mat4(1.0f); // static camera
 
