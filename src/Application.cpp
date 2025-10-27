@@ -13,22 +13,27 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "vendor/glm/gtc/matrix_transform.hpp"
-#include "BackgroundRenderer.hpp"
 #include "vendor/imgui/imgui.h"
 #include "vendor/imgui/imgui_impl_glfw.h"
 #include "vendor/imgui/imgui_impl_opengl3.h"
 
+static void glfw_error_callback(int error, const char* description)
+{
+    std::cerr << "GLFW Error (" << error << "): " << description << '\n';
+}
 
 
 int main(void)
 {
     // ----------------- Init -----------------
+    glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
     {
         std::cerr << "❗️Failed to init GLFW\n";
         return -1;
     }
 
+    
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -40,6 +45,9 @@ int main(void)
         glfwTerminate();
         return -1;
     }
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow*, int width, int height) {
+        glViewport(0, 0, width, height);
+    });
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // V-Sync
@@ -77,7 +85,15 @@ int main(void)
     IndexBuffer ib(indices, 6);
 
     // ----------------- Matrix -----------------
-    glm::mat4 proj = glm::ortho(-3.0f, 3.0f, -2.0f, 2.0f, -1.0f, 1.0f); // For Projection view
+   int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    float aspect = (float)width / (float)height;
+
+    // Keep 6 units across X (same visual width)
+    float orthoHeight = 6.0f / aspect;
+
+    glm::mat4 proj = glm::ortho(-3.0f, 3.0f, -orthoHeight / 2.0f, orthoHeight / 2.0f, -1.0f, 1.0f);
+
 
     // // ----------------- Shader -----------------
     Shader shader("res/shaders/Basic.shader");
@@ -106,7 +122,8 @@ int main(void)
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 330");
+    ImGui_ImplOpenGL3_Init("#version 330 core");
+    
 
     // ----------------- App State -----------------
     bool show_demo_window = true;
@@ -146,9 +163,7 @@ int main(void)
             ImGui::ColorEdit3("clear color", (float*)&clear_color);
             ImGui::Separator();
 
-            ImGui::Text("Lighting Controls" );
-            ImGui::SliderFloat("Object Brightness", &objectBrightness, 0.0f, 2.0f, "%.2f");
-            ImGui::SliderFloat("Background Brightness", &backgroundBrightness, 0.0f, 2.0f, "%.2f");
+           
 
             if (ImGui::Button("Reset All"))
             {
@@ -169,6 +184,9 @@ int main(void)
                 ImGui::Text("Hello from another window!");
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                             1000.0f / io.Framerate, io.Framerate);
+                ImGui::Text("Lighting Controls" );
+                ImGui::SliderFloat("Object Brightness", &objectBrightness, 0.0f, 2.0f, "%.2f");
+                ImGui::SliderFloat("Background Brightness", &backgroundBrightness, 0.0f, 2.0f, "%.2f");            
                 ImGui::End();
             }
         }
@@ -176,6 +194,20 @@ int main(void)
         // --- Logic Update ---
         angleA += speedA;
         angleB += speedB;
+
+          // --- Clamp positions (equal edge distance on X and Y) ---
+        const float halfW = 0.5f; // object half width
+        const float halfH = 0.5f; // object half height
+        const float left   = -3.0f + halfW;
+        const float right  =  3.0f - halfW;
+        const float bottom = -orthoHeight / 2.0f + halfH;
+        const float top    =  orthoHeight / 2.0f - halfH;
+
+        moveXA = std::clamp(moveXA, left, right);
+        moveXB = std::clamp(moveXB, left, right);
+        moveYA = std::clamp(moveYA, bottom, top);
+        moveYB = std::clamp(moveYB, bottom, top);
+
 
         // --- Clear and Render Scene ---
         ImVec4 adjustedClearColor = clear_color * backgroundBrightness;
