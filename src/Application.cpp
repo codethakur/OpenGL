@@ -1,5 +1,5 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
-#define IMGUI_IMPL_OPENGL_LOADER_GLAD   
+#define IMGUI_IMPL_OPENGL_LOADER_GLAD
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -16,8 +16,9 @@
 #include "vendor/imgui/imgui.h"
 #include "vendor/imgui/imgui_impl_glfw.h"
 #include "vendor/imgui/imgui_impl_opengl3.h"
+#include"Console.hpp"
 
-static void glfw_error_callback(int error, const char* description)
+static void glfw_error_callback(int error, const char *description)
 {
     std::cerr << "GLFW Error (" << error << "): " << description << '\n';
 }
@@ -25,6 +26,8 @@ static void glfw_error_callback(int error, const char* description)
 
 int main(void)
 {
+   
+
     // ----------------- Init -----------------
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
@@ -33,7 +36,6 @@ int main(void)
         return -1;
     }
 
-    
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -45,16 +47,15 @@ int main(void)
         glfwTerminate();
         return -1;
     }
-    glfwSetFramebufferSizeCallback(window, [](GLFWwindow*, int width, int height) {
-        glViewport(0, 0, width, height);
-    });
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int width, int height)
+                                   { glViewport(0, 0, width, height); });
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // V-Sync
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cerr << "❗️Failed to init GLAD\n";
+        Console::LOG("Failed to init GLAD",Color::RED);
         return -1;
     }
 
@@ -62,11 +63,11 @@ int main(void)
 
     // ----------------- Vertex Data -----------------
     float positions[] = {
-        //   X    Y      U       V
-        -0.5f, -0.5f, 0.0f, 0.0f, // 0
-        0.5f, -0.5f, 1.0f, 0.0f,  // 1
-        0.5f, 0.5f, 1.0f, 1.0f,   // 2
-        -0.5f, 0.5f, 0.0f, 1.0f   // 3
+        // X     Y      U       V
+        -0.5f, -0.5f,  0.0f,   0.0f,  // 0
+        0.5f,  -0.5f,  1.0f,   0.0f,  // 1
+        0.5f,  0.5f,   1.0f,   1.0f,  // 2
+        -0.5f, 0.5f,   0.0f,   1.0f   // 3
     };
 
     unsigned int indices[] = {
@@ -85,7 +86,7 @@ int main(void)
     IndexBuffer ib(indices, 6);
 
     // ----------------- Matrix -----------------
-   int width, height;
+    int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     float aspect = (float)width / (float)height;
 
@@ -93,7 +94,6 @@ int main(void)
     float orthoHeight = 6.0f / aspect;
 
     glm::mat4 proj = glm::ortho(-3.0f, 3.0f, -orthoHeight / 2.0f, orthoHeight / 2.0f, -1.0f, 1.0f);
-
 
     // // ----------------- Shader -----------------
     Shader shader("res/shaders/Basic.shader");
@@ -118,22 +118,20 @@ int main(void)
     // ----------------- ImGui Setup -----------------
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
-    
 
     // ----------------- App State -----------------
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
 
-
     // ----------------- Loop -----------------
 
-    
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -160,20 +158,18 @@ int main(void)
             ImGui::SliderFloat("Move Y B", &moveYB, -1.5f, 1.5f);
             ImGui::SliderFloat("Rotate Speed B", &speedB, -1.0f, 1.0f);
 
-            ImGui::ColorEdit3("clear color", (float*)&clear_color);
+            ImGui::ColorEdit3("clear color", (float *)&clear_color);
             ImGui::Separator();
-
-           
 
             if (ImGui::Button("Reset All"))
             {
-                moveXA = -1.5f ;
+                moveXA = -1.5f;
                 moveYA = moveXB = moveYB = 0.0f;
                 speedA = speedB = 0.0f;
                 angleA = angleB = 0.0f;
                 objectBrightness = 1.0f;
                 backgroundBrightness = 1.0f;
-               clear_color = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
+                clear_color = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
             }
 
             ImGui::End();
@@ -184,9 +180,9 @@ int main(void)
                 ImGui::Text("Hello from another window!");
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                             1000.0f / io.Framerate, io.Framerate);
-                ImGui::Text("Lighting Controls" );
+                ImGui::Text("Lighting Controls");
                 ImGui::SliderFloat("Object Brightness", &objectBrightness, 0.0f, 2.0f, "%.2f");
-                ImGui::SliderFloat("Background Brightness", &backgroundBrightness, 0.0f, 2.0f, "%.2f");            
+                ImGui::SliderFloat("Background Brightness", &backgroundBrightness, 0.0f, 2.0f, "%.2f");
                 ImGui::End();
             }
         }
@@ -195,34 +191,31 @@ int main(void)
         angleA += speedA;
         angleB += speedB;
 
-          // --- Clamp positions (equal edge distance on X and Y) ---
+        // --- Clamp positions (equal edge distance on X and Y) ---
         const float halfW = 0.5f; // object half width
         const float halfH = 0.5f; // object half height
-        const float left   = -3.0f + halfW;
-        const float right  =  3.0f - halfW;
+        const float left = -3.0f + halfW;
+        const float right = 3.0f - halfW;
         const float bottom = -orthoHeight / 2.0f + halfH;
-        const float top    =  orthoHeight / 2.0f - halfH;
+        const float top = orthoHeight / 2.0f - halfH;
 
         moveXA = std::clamp(moveXA, left, right);
         moveXB = std::clamp(moveXB, left, right);
         moveYA = std::clamp(moveYA, bottom, top);
         moveYB = std::clamp(moveYB, bottom, top);
 
-
         // --- Clear and Render Scene ---
         ImVec4 adjustedClearColor = clear_color * backgroundBrightness;
         glClearColor(adjustedClearColor.x, adjustedClearColor.y, adjustedClearColor.z, adjustedClearColor.w);
         renderer.Clear();
 
-       
         shader.Bind();
         texture.Bind(0);
         shader.setUniform4f("u_Color",
-                    1.0f * objectBrightness,
-                    r * objectBrightness,
-                    0.2f * objectBrightness,
-                    1.0f);
-
+                            1.0f * objectBrightness,
+                            r * objectBrightness,
+                            0.2f * objectBrightness,
+                            1.0f);
 
         glm::mat4 view = glm::mat4(1.0f); // static camera
 
@@ -237,8 +230,8 @@ int main(void)
         modelB = glm::rotate(modelB, angleB, glm::vec3(0.0f, 0.0f, 1.0f));
 
         // Render both
-        std::vector<glm::mat4> models = { modelA, modelB };
-        for (const auto& model : models)
+        std::vector<glm::mat4> models = {modelA, modelB};
+        for (const auto &model : models)
         {
             glm::mat4 mvp = proj * view * model;
             shader.setUniformMat4f("u_MVP", mvp);
@@ -246,8 +239,10 @@ int main(void)
         }
 
         // --- Animate color oscillation ---
-        if (r > 1.0f) increment = -0.05f;
-        else if (r < 0.0f) increment = 0.05f;
+        if (r > 1.0f)
+            increment = -0.05f;
+        else if (r < 0.0f)
+            increment = 0.05f;
         r += increment;
 
         // --- ImGui Render ---
@@ -256,6 +251,7 @@ int main(void)
 
         glfwSwapBuffers(window);
     }
+  
 
     // ----------------- Cleanup -----------------
     ImGui_ImplOpenGL3_Shutdown();
