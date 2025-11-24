@@ -1,6 +1,6 @@
 #include "Shader.hpp"
 #include "Renderer.hpp"
-
+#include "Console.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -66,10 +66,13 @@ unsigned int Shader::compileShader(unsigned int type, const std::string &source)
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
         char *message = (char *)alloca(length * sizeof(char));
         glGetShaderInfoLog(id, length, &length, message);
-        std::cerr << "[❗️Failed:] to compile "
-                  << (type == GL_VERTEX_SHADER ? "vertex" : "fragment")
-                  << " shader\n";
-        std::cout << message << std::endl;
+        Console::LOGN(
+            std::string("Failed to compile ") +
+                (type == GL_VERTEX_SHADER ? "vertex" : "fragment") +
+                " shader",
+            Color::RED);
+
+        Console::LOGN( message,Color::RED);
 
         glDeleteShader(id);
         return 0;
@@ -94,7 +97,7 @@ unsigned int Shader::createShader(const std::string &vertexShader, const std::st
 
     return program;
 }
-void Shader::Bind()const
+void Shader::Bind() const
 {
     GLCall(glUseProgram(m_renderedId));
 }
@@ -113,7 +116,8 @@ int Shader::getUniformLocation(const std::string &name)
     GLCall(int location = glGetUniformLocation(m_renderedId, name.c_str()));
 
     if (location == -1)
-        std::clog << "[⚠️ Warning: ] uniform '" << name << "' doesn't exits\n";
+         Console::LOGN(
+            std::string("[ Warning: ] uniform '" )+ name+ "' doesn't exits", Color::YELLOW);
     m_uniformLoactionCache[name] = location;
     return location;
 }
@@ -131,15 +135,14 @@ void Shader::setUniform4f(const std::string &name, float v0, float v1, float v2,
     GLCall(glUniform4f(getUniformLocation(name), v0, v1, v2, v3));
 }
 
-void Shader::setUniformMat4f(const std::string &name, const glm::mat4& matrix)
+void Shader::setUniformMat4f(const std::string &name, const glm::mat4 &matrix)
 {
     GLint loc = getUniformLocation(name);
     if (loc == -1)
     {
-        std::cerr << "❌ setUniformMat4f: uniform '" << name << "' not found\n";
-        return; 
+        Console::LOGN(std::string("setUniformMat4f: uniform '") + name + std::string("' not found"), Color::RED);
+        return;
     }
 
     glUniformMatrix4fv(loc, 1, GL_FALSE, &matrix[0][0]);
 }
-

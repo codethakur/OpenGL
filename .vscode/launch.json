@@ -11,7 +11,7 @@
             "cwd": "${workspaceFolder}",
             "externalConsole": true, 
             "MIMode": "lldb",
-            //"preLaunchTask": "build app",
+            "preLaunchTask": "build app",
 
         }
     ]

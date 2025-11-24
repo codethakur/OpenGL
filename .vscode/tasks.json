@@ -46,6 +46,6 @@
 		}
 	],
 	"code-runner.executorMap": {
-        "cpp": "cd $dir && clang++ -std=c++23 -Wall -O2 src/Application.cpp src/glad.c -IDependencies/include -LDependencies/library -lglfw -framework Cocoa -framework OpenGL -framework IOKit -o app && ./app"
+        "cpp": "cd $dir && clang++ -std=c++23 -Wall -O2 src/main.cpp src/glad.c -IDependencies/include -LDependencies/library -lglfw -framework Cocoa -framework OpenGL -framework IOKit -o app && ./app"
 }
 }
