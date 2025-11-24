@@ -4,17 +4,17 @@
 
 #include "Graphicsengine.hpp"
 #include "vendor/imgui/imgui.h"
-
+#include<vector>
 class App {
-    struct SceneObject {
-    Graphicsengine::ObjectId id;
-    glm::mat4 model;
-    glm::vec4 color;
-};
-
-std::vector<SceneObject> objects;
-
 public:
+    struct ScreenObjeect
+    {
+        Graphicsengine::ObjectId id;
+        glm::mat4 model;
+        glm::vec4 color;
+    };
+    std::vector<ScreenObjeect>objects;
+    
     App();
     ~App();
 
@@ -24,8 +24,8 @@ private:
     GLFWwindow* window = nullptr;
     Graphicsengine* gfx = nullptr;
 
-    Graphicsengine::ObjectId objA = 0;
-    Graphicsengine::ObjectId objB = 0;
+    // Graphicsengine::ObjectId objA = 0;
+    // Graphicsengine::ObjectId objB = 0;
 
     void initWindow();
     void initGL();
@@ -48,5 +48,5 @@ private:
     float backgroundBrightness = 1.0f;
 
     ImVec4 clearColor = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
-
+    
 };

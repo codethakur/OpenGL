@@ -89,9 +89,21 @@ void App::initImGui()
 void App::loadResources()
 {
     gfx = new Graphicsengine(window);
+    objects.clear();
 
-    objA = gfx->createQuad("res/textures/codethakur.png");
-    objB = gfx->createQuad("res/textures/codethakur.png");
+    ScreenObjeect A;
+    A.id=  gfx->createQuad("res/textures/codethakur.png");
+    A.model = glm::mat4(1.0f);
+    A.color = glm::vec4(1.0f);
+
+
+    ScreenObjeect B;
+    B.id=  gfx->createQuad("res/textures/codethakur.png");
+    B.model = glm::mat4(1.0f);
+    B.color = glm::vec4(1.0f);
+
+    objects.push_back(std::move(A));
+    objects.push_back(std::move(B));
 
    
     angleA = 0.0f;
@@ -114,9 +126,15 @@ void App::loadResources()
 
 void App::update()
 {
+    
     angleA += speedA;
     angleB += speedB;
 
+    if (r > 1.0f) increment = -0.05f;
+    else if (r < 0.0f) increment = 0.05f;
+    r += increment;
+
+    
     const float halfW = 0.5f;
     const float halfH = 0.5f;
 
@@ -125,20 +143,50 @@ void App::update()
     float aspect = (width > 0 && height > 0) ? (float)width / (float)height : 1.0f;
     float orthoHeight = 6.0f / aspect;
 
-    const float left = -3.0f + halfW;
-    const float right = 3.0f - halfW;
+    const float left   = -3.0f + halfW;
+    const float right  =  3.0f - halfW;
     const float bottom = -orthoHeight / 2.0f + halfH;
-    const float top = orthoHeight / 2.0f - halfH;
+    const float top    =  orthoHeight / 2.0f - halfH;
 
     moveXA = std::clamp(moveXA, left, right);
-    moveXB = std::clamp(moveXB, left, right);
     moveYA = std::clamp(moveYA, bottom, top);
+
+    moveXB = std::clamp(moveXB, left, right);
     moveYB = std::clamp(moveYB, bottom, top);
 
-    if (r > 1.0f) increment = -0.05f;
-    else if (r < 0.0f) increment = 0.05f;
-    r += increment;
+
+    if (objects.size() >= 1)
+    {
+        objects[0].model =
+            glm::translate(glm::mat4(1.0f), glm::vec3(moveXA, moveYA, 0.0f));
+        objects[0].model =
+            glm::rotate(objects[0].model, angleA, glm::vec3(0, 0, 1));
+
+        objects[0].color = glm::vec4(
+            1.0f * objectBrightness,
+            r     * objectBrightness,
+            0.2f  * objectBrightness,
+            1.0f
+        );
+    }
+
+    if (objects.size() >= 2)
+    {
+        objects[1].model =
+            glm::translate(glm::mat4(1.0f), glm::vec3(moveXB, moveYB, 0.0f));
+        objects[1].model =
+            glm::rotate(objects[1].model, angleB, glm::vec3(0, 0, 1));
+
+        objects[1].color = glm::vec4(
+            1.0f * objectBrightness,
+            r     * objectBrightness,
+            0.2f  * objectBrightness,
+            1.0f
+        );
+    }
+
 }
+
 
 void App::render()
 {
@@ -165,8 +213,10 @@ void App::render()
         0.2f  * objectBrightness,
         1.0f
     );
-    gfx->draw(objA, modelA, color);
-    gfx->draw(objB, modelB, color);
+    for(auto& obj: objects){
+        gfx->draw(obj.id, obj.model, obj.color);
+   }
+
 }
 
 void App::renderImGui()
