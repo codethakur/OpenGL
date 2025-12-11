@@ -1,10 +1,11 @@
 #pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include<vector>
 
 #include "Graphicsengine.hpp"
 #include "vendor/imgui/imgui.h"
-#include<vector>
+
 class App {
 public:
     struct ScreenObjeect
@@ -13,19 +14,27 @@ public:
         glm::mat4 model;
         glm::vec4 color;
     };
+    struct ObjectControl
+    {
+        float moveX = 0.0f;
+        float moveY = 0.0f; 
+        float rotatespeed = 0.0f;
+        float angle = 0.0f;
+    };
     std::vector<ScreenObjeect>objects;
+    std::vector<ObjectControl>controls;
     
     App();
     ~App();
-
+    bool dragging = false;
+    int draggedIndex = -1;
+    glm::vec2 dragOffset;
     void run();
 
 private:
     GLFWwindow* window = nullptr;
     Graphicsengine* gfx = nullptr;
 
-    // Graphicsengine::ObjectId objA = 0;
-    // Graphicsengine::ObjectId objB = 0;
 
     void initWindow();
     void initGL();
@@ -37,10 +46,8 @@ private:
     void renderImGui();
     void shutdown();
 
-    float angleA = 0.0f, angleB = 0.0f;
-    float moveXA = -1.5f, moveYA = 0.0f;
-    float moveXB = 0.0f, moveYB = 0.0f;
-    float speedA = 0.0f, speedB = 0.0f;
+   
+
     float r = 0.0f, increment = 0.05f;
 
     
@@ -48,5 +55,6 @@ private:
     float backgroundBrightness = 1.0f;
 
     ImVec4 clearColor = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
+    glm::vec2 screenToWorld(double mx, double my);
     
 };

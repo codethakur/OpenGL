@@ -2,11 +2,9 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
 #include <string>
 #include <unordered_map>
 #include <cstdint>
-
 #include "Shader.hpp"
 #include "VertexArray.hpp"
 #include "VertexBuffer.hpp"
@@ -25,6 +23,7 @@ public:
     ObjectId createQuad(const std::string& texturePath);
     void draw(ObjectId id, const glm::mat4& model, const glm::vec4& color = glm::vec4(1.0f));
     void clear(const glm::vec4& color);
+    glm::mat4 proj;
 
 private:
     struct Buffer {
@@ -39,5 +38,5 @@ private:
 
     Shader* shader = nullptr;
     Renderer* renderer = nullptr;
-    glm::mat4 proj;
+   
 };
