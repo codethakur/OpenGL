@@ -5,8 +5,9 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <vector>
-#include <algorithm> 
+#include <algorithm>
 #include <string>
+#include <memory>
 
 #include "App.hpp"
 #include "vendor/glm/gtc/matrix_transform.hpp"
@@ -14,12 +15,14 @@
 #include "vendor/imgui/imgui_impl_glfw.h"
 #include "vendor/imgui/imgui_impl_opengl3.h"
 #include "Console.hpp"
+#include "ImGuiUI.hpp"
 
 App::App()
 {
     initWindow();
     initGL();
-    initImGui();
+    initImGui();       
+    initImGuiWindow();
     loadResources();
 }
 
@@ -33,16 +36,21 @@ void App::run()
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
+
         update();
         render();
-        renderImGui();
+
+        renderImGuiWindow();
+
         glfwSwapBuffers(window);
     }
+    shutdownImGuiWindow();
 }
 
 void App::initWindow()
 {
-    if (!glfwInit()) {
+    if (!glfwInit())
+    {
         Console::LOGN("Failed to init GLFW", Color::RED);
         return;
     }
@@ -51,9 +59,10 @@ void App::initWindow()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_CORE_PROFILE, GLFW_TRUE);
 
-    window = glfwCreateWindow(940, 680, "OpenGL  Window", NULL, NULL);
-    if (!window) {
-        Console::LOGN("Failed to create GLFW window", Color::RED);
+    window = glfwCreateWindow(940, 680, "OpenGL Window", NULL, NULL);
+    if (!window)
+    {
+        Console::LOGN("Failed to create GLFW main window", Color::RED);
         glfwTerminate();
         return;
     }
@@ -68,7 +77,8 @@ void App::initWindow()
 
 void App::initGL()
 {
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
         Console::LOGN("Failed to init GLAD", Color::RED);
         return;
     }
@@ -76,16 +86,114 @@ void App::initGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
-
 void App::initImGui()
 {
+    
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 330 core");
     ImGui::StyleColorsDark();
+
+    mainImGuiContext = ImGui::GetCurrentContext();
+
+    uiRoot = std::make_shared<UIWindow>("Object Editor");
+    auto objPanel = std::make_shared<UIObjectListPanel>(&objects, &controls, &clearColor, &objectBrightness, &backgroundBrightness);
+
+
+    objPanel->onAddObject = [this]()
+    {
+        ScreenObjeect o;
+        o.id = gfx->createQuad("res/textures/codethakur.png");
+        o.model = glm::mat4(1.0f);
+        o.color = glm::vec4(1.0f);
+        objects.push_back(o);
+
+        ObjectControl c;
+        const float offset = 0.5f * float(objects.size() - 1);
+        c.moveX = -1.5f + offset;
+        c.moveY = 0.0f;
+        c.rotatespeed = 0.0f;
+        c.angle = 0.0f;
+        controls.push_back(c);
+    };
+
+    objPanel->onRemoveLast = [this]()
+    {
+        if (!objects.empty()  && objects.size()>1) {
+            objects.pop_back();
+            controls.pop_back();
+        }
+    };
+
+    objPanel->onResetAll = [this]()
+    {
+        for (size_t i = 0; i < controls.size(); ++i) {
+            controls[i].moveX = (i == 0 ? -1.5f : 0.0f);
+            controls[i].moveY = 0.0f;
+            controls[i].rotatespeed = 0.0f;
+            controls[i].angle = 0.0f;
+
+            objects[i].color = glm::vec4(1.0f);
+            objects[i].model = glm::mat4(1.0f);
+            
+        }
+
+        objectBrightness = 1.0f;
+        backgroundBrightness = 1.0f;
+        clearColor = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
+    };
+
+    uiRoot->add(objPanel);
 }
 
+void App::initImGuiWindow()
+{
+    imguiWindow = glfwCreateWindow(450, 520, "Controls Window", nullptr, window);
+    if (!imguiWindow)
+    {
+        Console::LOGN("Failed to create ImGui Controls window", Color::RED);
+        return;
+    }
+    glfwMakeContextCurrent(imguiWindow);
+
+    ImGui::SetCurrentContext(mainImGuiContext);
+
+    ImGui_ImplGlfw_InitForOpenGL(imguiWindow, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+    glfwMakeContextCurrent(window);
+    ImGui::SetCurrentContext(mainImGuiContext);
+}
+
+void App::renderImGuiWindow()
+{
+    if (!imguiWindow) return;
+
+    if (glfwWindowShouldClose(imguiWindow))
+    {
+        shutdownImGuiWindow();
+        return;
+    }
+
+    glfwMakeContextCurrent(imguiWindow);
+    ImGui::SetCurrentContext(mainImGuiContext);
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    if (uiRoot)
+        uiRoot->render();
+
+    ImGui::Render();
+
+    int w, h;
+    glfwGetFramebufferSize(imguiWindow, &w, &h);
+    glViewport(0, 0, w, h);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    glfwSwapBuffers(imguiWindow);
+    glfwMakeContextCurrent(window);
+    ImGui::SetCurrentContext(mainImGuiContext);
+}
 void App::loadResources()
 {
     gfx = new Graphicsengine(window);
@@ -104,11 +212,13 @@ void App::loadResources()
     objControl.rotatespeed = 0.0f;
     objControl.angle = 0.0f;
     controls.push_back(objControl);
+
     r = 0.0f;
     increment = 0.05f;
     objectBrightness = 1.0f;
     backgroundBrightness = 1.0f;
 }
+
 glm::vec2 App::screenToWorld(double mx, double my)
 {
     int width, height;
@@ -117,15 +227,14 @@ glm::vec2 App::screenToWorld(double mx, double my)
     float y = 1.0f - (my / height) * 2.0f;
 
     glm::vec4 world = glm::inverse(gfx->proj) * glm::vec4(x, y, 0.0f, 1.0f);
-
     return glm::vec2(world.x, world.y);
 }
 
-
 void App::update()
 {
-    if (ImGui::GetIO().WantCaptureMouse)
-        return;
+    ImGui::SetCurrentContext(mainImGuiContext);
+    ImGuiIO io = ImGui::GetIO();
+    if (io.WantCaptureMouse) return;
 
     double mx, my;
     glfwGetCursorPos(window, &mx, &my);
@@ -138,7 +247,7 @@ void App::update()
 
     if (!dragging && mouseDown)
     {
-        for (int i = controls.size() - 1; i >= 0; --i)   
+        for (int i = int(controls.size()) - 1; i >= 0; --i)
         {
             float x = controls[i].moveX;
             float y = controls[i].moveY;
@@ -171,6 +280,7 @@ void App::update()
     if (r > 1.0f) increment = -0.05f;
     else if (r < 0.0f) increment = 0.05f;
     r += increment;
+
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     float aspect = (width > 0 && height > 0) ? (float)width / (float)height : 1.0f;
@@ -205,113 +315,46 @@ void App::update()
 void App::render()
 {
     ImVec4 adjustedClear = clearColor * backgroundBrightness;
-
-    gfx->clear(glm::vec4(
-        adjustedClear.x,
-        adjustedClear.y,
-        adjustedClear.z,
-        adjustedClear.w
-    ));
+    gfx->clear(glm::vec4(adjustedClear.x, adjustedClear.y, adjustedClear.z, adjustedClear.w));
 
     for (auto& obj : objects) {
         gfx->draw(obj.id, obj.model, obj.color);
     }
+    
 }
 
-void App::renderImGui()
+void App::shutdownImGuiWindow()
 {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
+    if (!imguiWindow) return;
+    glfwMakeContextCurrent(imguiWindow);
+    ImGui::SetCurrentContext(mainImGuiContext);
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
 
-    ImGui::Begin("Hello, from ImGui");
+    glfwDestroyWindow(imguiWindow);
+    imguiWindow = nullptr;
 
-    if (ImGui::Button("More Object"))
-    {
-        ScreenObjeect o;
-        o.id = gfx->createQuad("res/textures/codethakur.png");
-        o.model = glm::mat4(1.0f);
-        o.color = glm::vec4(1.0f);
-        objects.push_back(std::move(o));
-
-        ObjectControl c;
-        const float offset = 0.5f * static_cast<float>(objects.size() - 1);
-        c.moveX = -1.5f + offset;
-        c.moveY = 0.0f;
-        c.rotatespeed = 0.0f;
-        c.angle = 0.0f;
-        controls.push_back(c);
-    }
-
-    ImGui::SameLine();
-    if (ImGui::Button("Remove Last"))
-    {
-        if (!objects.empty()) {
-            objects.pop_back();
-            controls.pop_back();
-        }
-    }
-
-    ImGui::Separator();
-
-    for (size_t i = 0; i < controls.size(); ++i)
-    {
-        std::string title = "Object " + std::to_string(i + 1) + " Controls";
-        ImGui::Text("%s", title.c_str());
-        ImGui::SliderFloat(("Move X##" + std::to_string(i)).c_str(),
-                           &controls[i].moveX, -2.0f, 2.0f);
-        ImGui::SliderFloat(("Move Y##" + std::to_string(i)).c_str(),
-                           &controls[i].moveY, -1.5f, 1.5f);
-        ImGui::SliderFloat(("Rotate Speed##" + std::to_string(i)).c_str(),
-                           &controls[i].rotatespeed, -1.0f, 1.0f);
-
-        ImGui::SameLine();
-        if (ImGui::Button(("Reset##" + std::to_string(i)).c_str())) {
-            controls[i].moveX = (i == 0 ? -1.5f : 0.0f);
-            controls[i].moveY = 0.0f;
-            controls[i].rotatespeed = 0.0f;
-            controls[i].angle = 0.0f;
-        }
-
-        ImGui::Separator();
-    }
-    ImGui::ColorEdit3("clear color", (float*)&clearColor);
-    ImGui::SliderFloat("Object Brightness", &objectBrightness, 0.0f, 2.0f);
-    ImGui::SliderFloat("Background Brightness", &backgroundBrightness, 0.0f, 2.0f);
-
-    if (ImGui::Button("Reset All"))
-    {
-        for (size_t i = 0; i < controls.size(); ++i) {
-            controls[i].moveX = (i == 0 ? -1.5f : 0.0f);
-            controls[i].moveY = 0.0f;
-            controls[i].rotatespeed = 0.0f;
-            controls[i].angle = 0.0f;
-
-            objects[i].color = glm::vec4(1.0f);
-            objects[i].model = glm::mat4(1.0f);
-        }
-
-        objectBrightness = 1.0f;
-        backgroundBrightness = 1.0f;
-        clearColor = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
-    }
-
-    ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    glfwMakeContextCurrent(window);
+    ImGui::SetCurrentContext(mainImGuiContext);
 }
 
 void App::shutdown()
 {
     delete gfx;
 
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-
-    if (window) {
-        glfwDestroyWindow(window);
+    shutdownImGuiWindow();
+    if (mainImGuiContext)
+    {
+        ImGui::SetCurrentContext(mainImGuiContext);
+        ImGui::DestroyContext(mainImGuiContext);
+        mainImGuiContext = nullptr;
     }
+
+    if (window)
+    {
+        glfwDestroyWindow(window);
+        window = nullptr;
+    }
+
     glfwTerminate();
 }
