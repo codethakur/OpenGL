@@ -24,6 +24,7 @@ Graphicsengine::Graphicsengine(GLFWwindow* window)
         glm::mat4(1.0f),
         glm::vec3(0.0f, 0.0f, -3.0f)
     );
+    
 
     shader->Bind();
     shader->setUniform1i("u_Texture", 0);
@@ -48,7 +49,7 @@ Graphicsengine::~Graphicsengine()
 
 Graphicsengine::ObjectId Graphicsengine::createQuad(const std::string &texturePath)
 {
-    float h = 0.3f;   // half size
+    float h = 0.2f;   // half size
 
     float positions[] = {
         // x      y      z      u     v

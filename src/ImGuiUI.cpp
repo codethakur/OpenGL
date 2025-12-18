@@ -49,7 +49,7 @@ void UIObjectListPanel::render()
         ImGui::SliderFloat(("Move X##" + std::to_string(i)).c_str(),
                            &(*controls)[i].moveX, -1.2120f, 1.212f);
         ImGui::SliderFloat(("Move Y##" + std::to_string(i)).c_str(),
-                           &(*controls)[i].moveY, -0.773f, 0.773f);
+                           &(*controls)[i].moveY, -0.753f, 0.753f);
         ImGui::SliderFloat(("Rotate Speed##" + std::to_string(i)).c_str(),
                            &(*controls)[i].rotatespeed, -1.0f, 1.0f);
 

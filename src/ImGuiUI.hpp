@@ -6,7 +6,7 @@
 #include "vendor/imgui/imgui.h"
 #include "App.hpp" 
 
-
+class Graphicsengine;
 class UIComponent {
 public:
     virtual ~UIComponent() = default;
