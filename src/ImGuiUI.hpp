@@ -27,8 +27,20 @@ private:
 class UIObjectListPanel : public UIComponent {
 public:
 
-    UIObjectListPanel(std::vector<ScreenObjeect>* objs, std::vector<ObjectControl>* ctrls,  ImVec4* clr, float* objBrightness, float* bgBrightness)
-        : objects(objs), controls(ctrls),objectBrightness(objBrightness), backgroundBrightness(bgBrightness),clearColor(clr){}
+UIObjectListPanel(
+        std::vector<ScreenObjeect>* objs,
+        std::vector<ObjectControl>* ctrls,
+        ImVec4* clr,
+        float* objBrightness,
+        float* bgBrightness
+    )
+        : objects(objs),
+          controls(ctrls),
+          objectBrightness(objBrightness),
+          clearColor(clr),
+          backgroundBrightness(bgBrightness)
+    {}
+
     
     void render() override;
 
@@ -43,4 +55,5 @@ private:
     float* objectBrightness;       
     float* backgroundBrightness;   
     ImVec4* clearColor;
+
 };

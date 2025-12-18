@@ -1,5 +1,5 @@
 #include "Graphicsengine.hpp"
-
+#include<iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "vendor/glm/gtc/matrix_transform.hpp"
@@ -11,20 +11,29 @@ Graphicsengine::Graphicsengine(GLFWwindow* window)
 
     int width = 1, height = 1;
     glfwGetFramebufferSize(window, &width, &height);
-    float aspect = (width > 0 && height > 0) ? (float)width / (float)height : 1.0f;
-    float orthoHeight = 6.0f / aspect;
+    float aspect = (float)width / (float)height;
 
-    proj = glm::ortho(-3.0f, 3.0f,
-                      -orthoHeight / 2.0f, orthoHeight / 2.0f,
-                      -1.0f, 1.0f);
+    proj = glm::perspective(
+        glm::radians(45.0f),
+        aspect,
+        0.1f,
+        100.0f
+    );
+
+    view = glm::translate(
+        glm::mat4(1.0f),
+        glm::vec3(0.0f, 0.0f, -3.0f)
+    );
 
     shader->Bind();
     shader->setUniform1i("u_Texture", 0);
 }
 
+
 Graphicsengine::~Graphicsengine()
 {
-    for (auto &kv :buffersMap) {
+    for (auto &kv : buffersMap)
+    {
         auto &b = kv.second;
         delete b.vb;
         delete b.ib;
@@ -37,40 +46,45 @@ Graphicsengine::~Graphicsengine()
     delete renderer;
 }
 
-Graphicsengine::ObjectId Graphicsengine::createQuad(const std::string& texturePath)
+Graphicsengine::ObjectId Graphicsengine::createQuad(const std::string &texturePath)
 {
+    float h = 0.3f;   // half size
+
     float positions[] = {
-        -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.0f, 1.0f
+        // x      y      z      u     v
+        -h, -h,  0.0f,  0.0f, 0.0f,
+        h, -h,  0.0f,  1.0f, 0.0f,
+        h,  h,  0.0f,  1.0f, 1.0f,
+        -h,  h,  0.0f,  0.0f, 1.0f
     };
 
-    unsigned indices[] = { 0, 1, 2, 2, 3, 0 };
 
-    auto* vao = new VertexArray();
-    auto* vb = new VertexBuffer(positions, sizeof(positions));
-    auto* ib = new IndexBuffer(indices, 6);
+
+    unsigned indices[] = {0, 1, 2, 2, 3, 0};
+
+    auto *vao = new VertexArray();
+    auto *vb = new VertexBuffer(positions, sizeof(positions));
+    auto *ib = new IndexBuffer(indices, 6);
 
     VertexBufferLayout layout;
-    layout.Push<float>(2);
+    layout.Push<float>(3);
     layout.Push<float>(2);
     vao->addBuffer(*vb, layout);
 
-    auto* tex = new Texture(texturePath);
+    auto *tex = new Texture(texturePath);
 
     ObjectId id = nextId++;
-    buffersMap[id] = { vao, vb, ib, tex };
+    buffersMap[id] = {vao, vb, ib, tex};
     return id;
 }
 
-void Graphicsengine::draw(ObjectId id, const glm::mat4& model, const glm::vec4& color)
+void Graphicsengine::draw(ObjectId id, const glm::mat4 &model, const glm::vec4 &color)
 {
     auto it = buffersMap.find(id);
     if (it == buffersMap.end()) return;
     auto &m = it->second;
 
-    glm::mat4 mvp = proj * model;
+    glm::mat4 mvp = proj * view * model;
 
     shader->Bind();
     shader->setUniform1i("u_Texture", 0);
@@ -79,10 +93,12 @@ void Graphicsengine::draw(ObjectId id, const glm::mat4& model, const glm::vec4& 
 
     m.texture->Bind(0);
     renderer->Draw(*m.vao, *m.ib, *shader);
+
 }
 
 void Graphicsengine::clear(const glm::vec4& color)
 {
     glClearColor(color.r, color.g, color.b, color.a);
-    renderer->Clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
+

@@ -21,7 +21,7 @@ App::App()
 {
     initWindow();
     initGL();
-    initImGui();       
+    initImGui();
     initImGuiWindow();
     loadResources();
 }
@@ -36,22 +36,22 @@ void App::run()
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
-
         update();
         render();
-
-        renderImGuiWindow();
-
+         renderImGuiWindow(); 
         glfwSwapBuffers(window);
+        if (r > 1.0f) increment = -0.05f;
+        else if (r < 0.0f) increment = 0.05f;
+        r += increment;
+
     }
-    shutdownImGuiWindow();
 }
 
 void App::initWindow()
 {
     if (!glfwInit())
     {
-        Console::LOGN("Failed to init GLFW", Color::RED);
+        std::cerr << "GLFW init failed\n";
         return;
     }
 
@@ -79,13 +79,14 @@ void App::initGL()
 {
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        Console::LOGN("Failed to init GLAD", Color::RED);
+       Console::LOGN("Failed to init GLAD", Color::RED);
         return;
     }
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
 }
+
 void App::initImGui()
 {
     
@@ -147,7 +148,7 @@ void App::initImGui()
 
 void App::initImGuiWindow()
 {
-    imguiWindow = glfwCreateWindow(450, 520, "Controls Window", nullptr, window);
+    imguiWindow = glfwCreateWindow(550, 520, "Controls Window", nullptr, window);
     if (!imguiWindow)
     {
         Console::LOGN("Failed to create ImGui Controls window", Color::RED);
@@ -162,19 +163,13 @@ void App::initImGuiWindow()
     glfwMakeContextCurrent(window);
     ImGui::SetCurrentContext(mainImGuiContext);
 }
-
 void App::renderImGuiWindow()
 {
     if (!imguiWindow) return;
 
-    if (glfwWindowShouldClose(imguiWindow))
-    {
-        shutdownImGuiWindow();
-        return;
-    }
-
     glfwMakeContextCurrent(imguiWindow);
     ImGui::SetCurrentContext(mainImGuiContext);
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -191,34 +186,88 @@ void App::renderImGuiWindow()
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(imguiWindow);
+
     glfwMakeContextCurrent(window);
     ImGui::SetCurrentContext(mainImGuiContext);
 }
+
 void App::loadResources()
 {
     gfx = new Graphicsengine(window);
     objects.clear();
-    controls.clear();
 
-    ScreenObjeect screenObj;
-    screenObj.id = gfx->createQuad("res/textures/codethakur.png");
-    screenObj.model = glm::mat4(1.0f);
-    screenObj.color = glm::vec4(1.0f);
-    objects.push_back(std::move(screenObj));
+    float s = 0.3;
 
-    ObjectControl objControl;
-    objControl.moveX = -1.5f;
-    objControl.moveY = 0.0f;
-    objControl.rotatespeed = 0.0f;
-    objControl.angle = 0.0f;
-    controls.push_back(objControl);
+    auto addFace = [&](const glm::mat4& model, const glm::vec4& color)
+{
+    ScreenObjeect o;
+    o.id = gfx->createQuad("res/textures/codethakur.png");
+    o.model = model;
+    o.color = color;
+    o.isCubeFace = true;      
+    objects.push_back(o);
+};
+    // FRONT
+    addFace(
+        glm::translate(glm::mat4(1.0f), {0, 0, s}),
+        {1, 0, 0, 1});
 
+    // BACK
+    addFace(
+        glm::translate(
+            glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), {0,1,0}),
+            {0, 0, s}),
+        {0, 1, 0, 1});
+
+    // LEFT
+    addFace(
+        glm::translate(
+            glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), {0,1,0}),
+            {0, 0, s}),
+        {0, 0, 1, 1});
+
+    // RIGHT
+    addFace(
+        glm::translate(
+            glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), {0,1,0}),
+            {0, 0, s}),
+        {1, 1, 0, 1});
+
+    // TOP
+    addFace(
+        glm::translate(
+            glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), {1,0,0}),
+            {0, 0, s}),
+        {0, 1, 1, 1});
+
+    // BOTTOM
+    addFace(
+        glm::translate(
+            glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), {1,0,0}),
+            {0, 0, s}),
+        {1, 0, 1, 1});
     r = 0.0f;
     increment = 0.05f;
     objectBrightness = 1.0f;
-    backgroundBrightness = 1.0f;
+    backgroundBrightness = 1.0f;  
+    controls.clear();
+    controls.resize(1); 
+
 }
 
+void App::render()
+{
+    ImVec4 adjustedClear = clearColor * backgroundBrightness;
+  
+    gfx->clear(glm::vec4(adjustedClear.x, adjustedClear.y, adjustedClear.z, adjustedClear.w));
+
+    for (auto& obj : objects)
+    {
+        gfx->draw(obj.id, cubeTransform * obj.model, obj.color);
+    }
+
+    
+}
 glm::vec2 App::screenToWorld(double mx, double my)
 {
     int width, height;
@@ -242,8 +291,7 @@ void App::update()
 
     bool mouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 
-    const float halfW = 0.5f;
-    const float halfH = 0.5f;
+   const float cubeHalf = 0.5f; // MUST match face offset 's'
 
     if (!dragging && mouseDown)
     {
@@ -252,8 +300,9 @@ void App::update()
             float x = controls[i].moveX;
             float y = controls[i].moveY;
 
-            if (mouseWorld.x > x - halfW && mouseWorld.x < x + halfW &&
-                mouseWorld.y > y - halfH && mouseWorld.y < y + halfH)
+           if (mouseWorld.x > x - cubeHalf && mouseWorld.x < x + cubeHalf &&
+                mouseWorld.y > y - cubeHalf && mouseWorld.y < y + cubeHalf)
+
             {
                 dragging = true;
                 draggedIndex = i;
@@ -277,50 +326,19 @@ void App::update()
         }
     }
 
-    if (r > 1.0f) increment = -0.05f;
-    else if (r < 0.0f) increment = 0.05f;
-    r += increment;
+    ObjectControl& c = controls[0];
+    c.angle += c.rotatespeed;
 
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    float aspect = (width > 0 && height > 0) ? (float)width / (float)height : 1.0f;
-    float orthoHeight = 6.0f / aspect;
+    cubeTransform =
+        glm::translate(glm::mat4(1.0f),
+                    glm::vec3(c.moveX, c.moveY, 0.0f));
 
-    const float left   = -3.0f + halfW;
-    const float right  =  3.0f - halfW;
-    const float bottom = -orthoHeight / 2.0f + halfH;
-    const float top    =  orthoHeight / 2.0f - halfH;
+    cubeTransform =
+        glm::rotate(cubeTransform,
+                    c.angle,
+                    glm::vec3(0, 1, 0));
 
-    for (size_t i = 0; i < controls.size(); i++)
-    {
-        controls[i].moveX = std::clamp(controls[i].moveX, left, right);
-        controls[i].moveY = std::clamp(controls[i].moveY, bottom, top);
 
-        controls[i].angle += controls[i].rotatespeed;
-
-        objects[i].model =
-            glm::translate(glm::mat4(1.0f), glm::vec3(controls[i].moveX, controls[i].moveY, 0.0f));
-        objects[i].model =
-            glm::rotate(objects[i].model, controls[i].angle, glm::vec3(0, 0, 1));
-
-        objects[i].color = glm::vec4(
-            1.0f * objectBrightness,
-            r     * objectBrightness,
-            0.2f  * objectBrightness,
-            1.0f
-        );
-    }
-}
-
-void App::render()
-{
-    ImVec4 adjustedClear = clearColor * backgroundBrightness;
-    gfx->clear(glm::vec4(adjustedClear.x, adjustedClear.y, adjustedClear.z, adjustedClear.w));
-
-    for (auto& obj : objects) {
-        gfx->draw(obj.id, obj.model, obj.color);
-    }
-    
 }
 
 void App::shutdownImGuiWindow()
@@ -337,6 +355,7 @@ void App::shutdownImGuiWindow()
     glfwMakeContextCurrent(window);
     ImGui::SetCurrentContext(mainImGuiContext);
 }
+
 
 void App::shutdown()
 {

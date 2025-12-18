@@ -2,7 +2,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include<vector>
-
 #include "Graphicsengine.hpp"
 #include "vendor/imgui/imgui.h"
 
@@ -11,6 +10,7 @@ struct ScreenObjeect
     Graphicsengine::ObjectId id;
     glm::mat4 model;
     glm::vec4 color;
+    bool isCubeFace = false; 
 };
 
 struct ObjectControl
@@ -19,6 +19,7 @@ struct ObjectControl
     float moveY = 0.0f;
     float rotatespeed = 0.0f;
     float angle = 0.0f;
+    
 };
 
 class UIWindow; 
@@ -59,8 +60,12 @@ private:
     bool dragging = false;
     int draggedIndex = -1;
     glm::vec2 dragOffset;
+    glm::mat4 cubeTransform = glm::mat4(1.0f);
     float objectBrightness = 1.0f;
     float backgroundBrightness = 1.0f;
     float r = 0.0f, increment = 0.05f;
     ImVec4 clearColor = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
+    
+
+
 };

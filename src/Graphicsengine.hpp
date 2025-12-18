@@ -24,6 +24,8 @@ public:
     void draw(ObjectId id, const glm::mat4& model, const glm::vec4& color = glm::vec4(1.0f));
     void clear(const glm::vec4& color);
     glm::mat4 proj;
+    glm::mat4 view;
+
 
 private:
     struct Buffer {
