@@ -5,16 +5,21 @@
 void UIWindow::render()
 {
     if (!open)
-        return;
-
+        return; 
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
     ImGuiWindowFlags flags =
         ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoTitleBar;
+        ImGuiWindowFlags_NoTitleBar ;
+        // ImGuiWindowFlags_NoDocking;
 
     if (ImGui::Begin(m_title.c_str(), &open, flags))
     {
+        ImGui::SliderFloat("Music Volume", &app.musicVolume, 0.0f, 1.0f);
+
+        ImGui::Separator();
+
         for (auto &c : children)
             c->render();
     }
@@ -32,7 +37,7 @@ void UIObjectListPanel::render()
         if (onAddObject)
             onAddObject();
     }
-
+    
     ImGui::SameLine();
     if (objects->size() > 1)
     {

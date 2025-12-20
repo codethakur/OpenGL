@@ -94,7 +94,7 @@ void App::initImGui()
 
     mainImGuiContext = ImGui::GetCurrentContext();
 
-    uiRoot = std::make_shared<UIWindow>("Object Editor");
+    uiRoot = std::make_shared<UIWindow>("Object Editor", *this);
     auto objPanel = std::make_shared<UIObjectListPanel>(&objects, &controls, &clearColor, &objectBrightness, &backgroundBrightness);
 
     objPanel->onAddObject = [this]()
@@ -143,7 +143,7 @@ void App::initImGui()
 
 void App::initImGuiWindow()
 {
-    imguiWindow = glfwCreateWindow(550, 520, "Controls Window", nullptr, window);
+    imguiWindow = glfwCreateWindow(550, 200, "Controls Window", nullptr, window);
     if (!imguiWindow)
     {
         Console::LOGN("Failed to create ImGui Controls window", Color::RED);
@@ -256,7 +256,8 @@ void App::loadResources()
 void App::render()
 {
     ImVec4 adjustedClear = clearColor * backgroundBrightness;
-
+    int sdlVolume = static_cast<int>(musicVolume * MIX_MAX_VOLUME);
+    Mix_VolumeMusic(sdlVolume);
     gfx->clear(glm::vec4(adjustedClear.x, adjustedClear.y, adjustedClear.z, adjustedClear.w));
 
     for (auto &obj : objects)

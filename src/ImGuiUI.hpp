@@ -16,12 +16,14 @@ public:
 
 class UIWindow : public UIComponent {
 public:
+    UIWindow(App& app);
     std::string m_title;
     bool open = true;
-    UIWindow(const std::string& title) : m_title(title) {}
+    UIWindow(const std::string& title, App& app) : m_title(title),app(app) {}
     void add(std::shared_ptr<UIComponent> c) override { children.push_back(c); }
     void render() override;
 private:
+    App& app; 
     std::vector<std::shared_ptr<UIComponent>> children;
 };
 class UIObjectListPanel : public UIComponent {

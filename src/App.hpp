@@ -35,11 +35,11 @@ public:
 
     std::vector<ScreenObjeect> objects;
     std::vector<ObjectControl> controls;
+    float musicVolume = 1.0f;
 
 private:
     void initAudio();
     void shutdownAudio();
-
     Mix_Music* backgroundMusic = nullptr;
    
     GLFWwindow* window = nullptr;           
@@ -63,7 +63,7 @@ private:
     void shutdown();
 
     glm::vec2 screenToWorld(double mx, double my);
-
+   
     bool dragging = false;
     int draggedIndex = -1;
     glm::vec2 dragOffset;
