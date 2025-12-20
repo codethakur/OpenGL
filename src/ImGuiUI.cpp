@@ -16,6 +16,7 @@ void UIWindow::render()
 
     if (ImGui::Begin(m_title.c_str(), &open, flags))
     {
+
         ImGui::SliderFloat("Music Volume", &app.musicVolume, 0.0f, 1.0f);
 
         ImGui::Separator();
