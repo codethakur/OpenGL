@@ -1,0 +1,15 @@
+{
+  "configurations": [
+    {
+      "name": "macOS",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "/opt/homebrew/include",
+        "/opt/homebrew/include/SDL2"
+      ],
+      "compilerPath": "/usr/bin/clang++",
+      "cppStandard": "c++17"
+    }
+  ],
+  "version": 4
+}

@@ -5,6 +5,9 @@
 #include "Graphicsengine.hpp"
 #include "vendor/imgui/imgui.h"
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+
 struct ScreenObjeect
 {
     Graphicsengine::ObjectId id;
@@ -34,6 +37,10 @@ public:
     std::vector<ObjectControl> controls;
 
 private:
+    void initAudio();
+    void shutdownAudio();
+
+    Mix_Music* backgroundMusic = nullptr;
    
     GLFWwindow* window = nullptr;           
     GLFWwindow* imguiWindow = nullptr;      

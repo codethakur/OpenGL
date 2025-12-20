@@ -21,6 +21,7 @@ App::App()
 {
     initWindow();
     initGL();
+    initAudio(); 
     initImGui();
     initImGuiWindow();
     loadResources();
@@ -28,6 +29,7 @@ App::App()
 
 App::~App()
 {
+    shutdownAudio();
     shutdown();
 }
 
@@ -35,18 +37,7 @@ void App::run()
 {
     while (!glfwWindowShouldClose(window))
     {
-        r += increment;
-
-        if (r > 1.0f)
-        {
-            r = 1.0f;
-            increment = -increment;
-        }
-        else if (r < 0.0f)
-        {
-            r = 0.0f;
-            increment = -increment;
-        }
+        
         glfwPollEvents();
         update();
         render();
@@ -200,7 +191,9 @@ void App::loadResources()
 {
     gfx = new Graphicsengine(window);
     objects.clear();
-
+    r += increment;
+    if (r > 1.0f || r < 0.0f)
+        increment = -increment;
     float s = 0.2;
 
     auto addFace = [&](const glm::mat4 &model, const glm::vec4 &color)
@@ -215,7 +208,7 @@ void App::loadResources()
     // FRONT
     addFace(
         glm::translate(glm::mat4(1.0f), {0, 0, s}),
-         {1, 0, 0, 1});
+         {0, 0, 0, 1});
 
     // BACK
     addFace(
@@ -351,7 +344,30 @@ void App::update()
                     c.angle,
                     glm::vec3(0, 1, 0));
 }
+void App::initAudio()
+{
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
 
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+
+    backgroundMusic = Mix_LoadMUS("res/gamemusic-6082.mp3");
+    if (!backgroundMusic) {
+        std::cout << "Audio load failed\n";
+        return;
+    }
+
+    Mix_PlayMusic(backgroundMusic, -1); 
+}
+void App::shutdownAudio()
+{
+    if (backgroundMusic) {
+        Mix_FreeMusic(backgroundMusic);
+        backgroundMusic = nullptr;
+    }
+
+    Mix_CloseAudio();
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
+}
 void App::shutdownImGuiWindow()
 {
     if (!imguiWindow)

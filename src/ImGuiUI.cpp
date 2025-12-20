@@ -4,7 +4,8 @@
 
 void UIWindow::render()
 {
-    if (!open) return;
+    if (!open)
+        return;
 
     ImGuiWindowFlags flags =
         ImGuiWindowFlags_NoMove |
@@ -14,28 +15,31 @@ void UIWindow::render()
 
     if (ImGui::Begin(m_title.c_str(), &open, flags))
     {
-        for (auto& c : children)
+        for (auto &c : children)
             c->render();
     }
 
     ImGui::End();
 }
 
-
 void UIObjectListPanel::render()
 {
-    if (!objects || !controls) return;
+    if (!objects || !controls)
+        return;
 
     if (ImGui::Button("More Object"))
     {
-        if (onAddObject) onAddObject();
+        if (onAddObject)
+            onAddObject();
     }
 
     ImGui::SameLine();
-    if(objects->size()>1){
+    if (objects->size() > 1)
+    {
         if (ImGui::Button("Remove  Object"))
         {
-            if (onRemoveLast) onRemoveLast();
+            if (onRemoveLast)
+                onRemoveLast();
         }
     }
 
@@ -47,9 +51,9 @@ void UIObjectListPanel::render()
         ImGui::Text("%s", title.c_str());
 
         ImGui::SliderFloat(("Move X##" + std::to_string(i)).c_str(),
-                           &(*controls)[i].moveX, -1.2120f, 1.212f);
+                           &(*controls)[i].moveX, -1.3120f, 1.312f);
         ImGui::SliderFloat(("Move Y##" + std::to_string(i)).c_str(),
-                           &(*controls)[i].moveY, -0.753f, 0.753f);
+                           &(*controls)[i].moveY, -0.853f, 0.853f);
         ImGui::SliderFloat(("Rotate Speed##" + std::to_string(i)).c_str(),
                            &(*controls)[i].rotatespeed, -1.0f, 1.0f);
 
@@ -62,27 +66,25 @@ void UIObjectListPanel::render()
             (*controls)[i].angle = 0.0f;
 
             (*objects)[i].model = glm::mat4(1.0f);
-           
         }
 
         ImGui::Separator();
     }
     ImGui::SliderFloat(
-    "Object Brightness",
-    objectBrightness,  
-    0.0f, 2.0f
-);
+        "Object Brightness",
+        objectBrightness,
+        0.0f, 2.0f);
 
-ImGui::SliderFloat(
-    "Background Brightness",
-    backgroundBrightness, 
-    0.0f, 2.0f
-);
-ImGui::Separator();
-ImGui::ColorEdit3("clear color", (float*)clearColor);
+    ImGui::SliderFloat(
+        "Background Brightness",
+        backgroundBrightness,
+        0.0f, 2.0f);
+    ImGui::Separator();
+    ImGui::ColorEdit3("clear color", (float *)clearColor);
 
     if (ImGui::Button("Reset All"))
     {
-        if (onResetAll) onResetAll();
+        if (onResetAll)
+            onResetAll();
     }
 }
