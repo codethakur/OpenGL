@@ -39,8 +39,8 @@ UIObjectListPanel(
         : objects(objs),
           controls(ctrls),
           objectBrightness(objBrightness),
-          clearColor(clr),
-          backgroundBrightness(bgBrightness)
+          backgroundBrightness(bgBrightness),
+          clearColor(clr)
     {}
 
     

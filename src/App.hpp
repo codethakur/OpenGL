@@ -35,7 +35,7 @@ public:
 
     std::vector<ScreenObjeect> objects;
     std::vector<ObjectControl> controls;
-    float musicVolume = 1.0f;
+    float musicVolume = 0.50f;
 
 private:
     void initAudio();

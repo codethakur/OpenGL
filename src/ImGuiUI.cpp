@@ -12,7 +12,7 @@ void UIWindow::render()
         ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoCollapse |
         ImGuiWindowFlags_NoTitleBar ;
-        // ImGuiWindowFlags_NoDocking;
+        //ImGuiWindowFlags_NoDocking;
 
     if (ImGui::Begin(m_title.c_str(), &open, flags))
     {
