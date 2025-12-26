@@ -1,10 +1,10 @@
 #include "Graphicsengine.hpp"
-#include<iostream>
+#include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "vendor/glm/gtc/matrix_transform.hpp"
 
-Graphicsengine::Graphicsengine(GLFWwindow* window)
+Graphicsengine::Graphicsengine(GLFWwindow *window)
 {
     shader = new Shader("res/shaders/Basic.shader");
     renderer = new Renderer();
@@ -17,19 +17,15 @@ Graphicsengine::Graphicsengine(GLFWwindow* window)
         glm::radians(45.0f),
         aspect,
         0.1f,
-        100.0f
-    );
+        100.0f);
 
     view = glm::translate(
         glm::mat4(1.0f),
-        glm::vec3(0.0f, 0.0f, -3.0f)
-    );
-    
+        glm::vec3(0.0f, 0.0f, -3.0f));
 
     shader->Bind();
     shader->setUniform1i("u_Texture", 0);
 }
-
 
 Graphicsengine::~Graphicsengine()
 {
@@ -47,19 +43,16 @@ Graphicsengine::~Graphicsengine()
     delete renderer;
 }
 
-Graphicsengine::ObjectId Graphicsengine::createQuad(const std::string &texturePath)
+Graphicsengine::ObjectId Graphicsengine::createCube(const std::string &texturePath)
 {
-    float h = 0.2f;   // half size
+    float h = 0.2f; // half size
 
     float positions[] = {
         // x      y      z      u     v
-        -h, -h,  0.0f,  0.0f, 0.0f,
-        h, -h,  0.0f,  1.0f, 0.0f,
-        h,  h,  0.0f,  1.0f, 1.0f,
-        -h,  h,  0.0f,  0.0f, 1.0f
-    };
-
-
+        -h, -h, 0.0f, 0.0f, 0.0f,
+        h, -h, 0.0f, 1.0f, 0.0f,
+        h, h, 0.0f, 1.0f, 1.0f,
+        -h, h, 0.0f, 0.0f, 1.0f};
 
     unsigned indices[] = {0, 1, 2, 2, 3, 0};
 
@@ -78,11 +71,35 @@ Graphicsengine::ObjectId Graphicsengine::createQuad(const std::string &texturePa
     buffersMap[id] = {vao, vb, ib, tex};
     return id;
 }
+Graphicsengine::ObjectId
+Graphicsengine::createTriangle(const std::string &texturePath)
+{
+    float positions[] =
+        {
+            0.0f,    0.25f,   0.0f, 0.5f, 1.0f,
+           -0.30f,  -0.30f,   0.0f, 0.0f, 0.0f,
+            0.30f, - 0.30f,   0.0f, 1.0f, 0.0f };
+        unsigned indices[] = {0, 1, 2};
+
+        auto*vao = new VertexArray();
+        auto*vb =  new VertexBuffer(positions, sizeof(positions));
+        auto* ib = new IndexBuffer(indices, 3);
+        VertexBufferLayout layout;
+        layout.Push<float>(3);
+        layout.Push<float>(2);
+        vao->addBuffer(*vb, layout);
+
+        auto tex = new Texture(texturePath);
+        ObjectId id= nextId++;
+        buffersMap[id] = {vao, vb, ib, tex};
+        return id;
+}
 
 void Graphicsengine::draw(ObjectId id, const glm::mat4 &model, const glm::vec4 &color)
 {
     auto it = buffersMap.find(id);
-    if (it == buffersMap.end()) return;
+    if (it == buffersMap.end())
+        return;
     auto &m = it->second;
 
     glm::mat4 mvp = proj * view * model;
@@ -94,12 +111,10 @@ void Graphicsengine::draw(ObjectId id, const glm::mat4 &model, const glm::vec4 &
 
     m.texture->Bind(0);
     renderer->Draw(*m.vao, *m.ib, *shader);
-
 }
 
-void Graphicsengine::clear(const glm::vec4& color)
+void Graphicsengine::clear(const glm::vec4 &color)
 {
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-

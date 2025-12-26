@@ -16,7 +16,7 @@ public:
 
 class UIWindow : public UIComponent {
 public:
-    UIWindow(App& app);
+    //UIWindow(App& app);
     std::string m_title;
     bool open = true;
     UIWindow(const std::string& title, App& app) : m_title(title),app(app) {}
@@ -49,6 +49,8 @@ UIObjectListPanel(
     std::function<void()> onAddObject;
     std::function<void()> onRemoveLast;
     std::function<void()> onResetAll;
+    std::function<void()> onAddCube;
+
 
 
 private:

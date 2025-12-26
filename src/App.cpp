@@ -15,6 +15,8 @@
 #include "Console.hpp"
 #include "ImGuiUI.hpp"
 #include "App.hpp"
+#include "primitives/cube.hpp"
+
 
 
 App::App()
@@ -97,22 +99,36 @@ void App::initImGui()
     uiRoot = std::make_shared<UIWindow>("Object Editor", *this);
     auto objPanel = std::make_shared<UIObjectListPanel>(&objects, &controls, &clearColor, &objectBrightness, &backgroundBrightness);
 
-    objPanel->onAddObject = [this]()
-    {
-        ScreenObjeect o;
-        o.id = gfx->createQuad("res/textures/codethakur.png");
-        o.model = glm::mat4(1.0f);
-        o.color = glm::vec4(1.0f);
-        objects.push_back(o);
+    // objPanel->onAddCube = [this]()
+    // {
+    //     ScreenObjeect o;
+    //     o.id = gfx->createCube("res/textures/codethakur.png");
+    //     o.model = glm::mat4(1.0f);
+    //     o.color = glm::vec4(1.0f);
+    //     objects.push_back(o);
 
-        ObjectControl c;
-        const float offset = 0.5f * float(objects.size() - 1);
-        c.moveX = -1.5f + offset;
-        c.moveY = 0.0f;
-        c.rotatespeed = 0.0f;
-        c.angle = 0.0f;
-        controls.push_back(c);
-    };
+
+    //     ObjectControl c;
+    //     const float offset = 0.5f * float(objects.size() - 1);
+    //     c.moveX = -1.5f + offset;
+    //     c.moveY = 0.0f;
+    //     c.rotatespeed = 0.0f;
+    //     c.angle = 0.0f;
+    //     controls.push_back(c);
+    // };
+    objPanel->onAddObject = [this]()
+{
+    Cube cube;
+    cube.build(objects, *gfx);
+
+    ObjectControl c;
+    c.moveX = 0.4f * controls.size(); // spread cubes
+    c.moveY = 0.0f;
+    c.rotatespeed = 0.0f;
+    c.angle = 0.0f;
+
+    controls.push_back(c);
+};
 
     objPanel->onRemoveLast = [this]()
     {
@@ -190,68 +206,19 @@ void App::renderImGuiWindow()
 void App::loadResources()
 {
     gfx = new Graphicsengine(window);
+
     objects.clear();
-    r += increment;
-    if (r > 1.0f || r < 0.0f)
-        increment = -increment;
-    float s = 0.2;
-
-    auto addFace = [&](const glm::mat4 &model, const glm::vec4 &color)
-    {
-        ScreenObjeect o;
-        o.id = gfx->createQuad("res/textures/codethakur.png");
-        o.model = model;
-        o.color = color;
-        o.isCubeFace = true;
-        objects.push_back(o);
-    };
-    // FRONT
-    addFace(
-        glm::translate(glm::mat4(1.0f), {0, 0, s}),
-         {0, 0, 0, 1});
-
-    // BACK
-    addFace(
-        glm::translate(
-            glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), {0, 1, 0}),
-            {0, 0, s}),
-        {0, 0, 0, 1});
-
-    // LEFT
-    addFace(
-        glm::translate(
-            glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), {0, 1, 0}),
-            {0, 0, s}),
-        {0, 0, 0, 1});
-
-    // RIGHT
-    addFace(
-        glm::translate(
-            glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), {0, 1, 0}),
-            {0, 0, s}),
-        {0, 0, 0, 1});
-
-    // TOP
-    addFace(
-        glm::translate(
-            glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), {1, 0, 0}),
-            {0, 0, s}),
-        {0, 0, 0, 1});
-
-    // BOTTOM
-    addFace(
-        glm::translate(
-            glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), {1, 0, 0}),
-            {0, 0, s}),
-        {0, 0, 0, 1});
-
-    r = 0.0f;
-    increment = 0.05f;
-    objectBrightness = 1.0f;
-    backgroundBrightness = 1.0f;
     controls.clear();
     controls.resize(1);
+
+    objectBrightness = 1.0f;
+    backgroundBrightness = 1.0f;
+
+    // // TEMP: build initial cube once
+    // Cube cube;
+    // cube.build(objects, *gfx);
 }
+
 
 void App::render()
 {
@@ -260,10 +227,30 @@ void App::render()
     Mix_VolumeMusic(sdlVolume);
     gfx->clear(glm::vec4(adjustedClear.x, adjustedClear.y, adjustedClear.z, adjustedClear.w));
 
-    for (auto &obj : objects)
-    {
-        gfx->draw(obj.id, cubeTransform * obj.model, obj.color);
-    }
+   size_t controlIndex = 0;
+
+for (size_t i = 0; i < objects.size(); ++i)
+{
+    const ObjectControl& c = controls[controlIndex];
+
+    glm::mat4 transform =
+        glm::translate(glm::mat4(1.0f),
+                       glm::vec3(c.moveX, c.moveY, 0.0f));
+
+    transform =
+        glm::rotate(transform,
+                    c.angle,
+                    glm::vec3(0, 1, 0));
+
+    gfx->draw(objects[i].id,
+              transform * objects[i].model,
+              objects[i].color);
+
+    // 1 cube = 6 faces = 1 control
+    if ((i + 1) % 6 == 0)
+        controlIndex++;
+}
+
 }
 glm::vec2 App::screenToWorld(double mx, double my)
 {

@@ -21,5 +21,5 @@ class Renderer
 public:
     virtual ~Renderer() = default;
     virtual void Draw(const VertexArray& va, IndexBuffer& ib, const Shader& shader) const;
-    virtual void Clear() const;
+    virtual void Clear(const glm::vec4& color) const;
 };

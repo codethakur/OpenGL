@@ -32,15 +32,28 @@ void UIObjectListPanel::render()
 {
     if (!objects || !controls)
         return;
-
-    if (ImGui::Button("More Object"))
+    if (ImGui::Button("Cube"))
+    {
+        if (onAddObject)
+            onAddObject();
+            
+    }
+    ImGui::SameLine();
+   
+    if (ImGui::Button("Tringle"))
+    {
+        if (onAddObject)
+            onAddObject();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Circle"))
     {
         if (onAddObject)
             onAddObject();
     }
     
     ImGui::SameLine();
-    if (objects->size() > 1)
+    if (objects->size()>0)
     {
         if (ImGui::Button("Remove  Object"))
         {
@@ -55,7 +68,10 @@ void UIObjectListPanel::render()
     {
         std::string title = "Object " + std::to_string(i + 1) + " Controls";
         ImGui::Text("%s", title.c_str());
+        if(objects->size()>0)
+        {
 
+        
         ImGui::SliderFloat(("Move X##" + std::to_string(i)).c_str(),
                            &(*controls)[i].moveX, -1.3120f, 1.312f);
         ImGui::SliderFloat(("Move Y##" + std::to_string(i)).c_str(),
@@ -73,6 +89,7 @@ void UIObjectListPanel::render()
 
             (*objects)[i].model = glm::mat4(1.0f);
         }
+    }
 
         ImGui::Separator();
     }

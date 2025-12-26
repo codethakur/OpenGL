@@ -20,7 +20,9 @@ public:
 
     using ObjectId = uint32_t;
 
-    ObjectId createQuad(const std::string& texturePath);
+    ObjectId createCube(const std::string& texturePath);
+    ObjectId createTriangle(const std::string& texturePath);
+    
     void draw(ObjectId id, const glm::mat4& model, const glm::vec4& color = glm::vec4(1.0f));
     void clear(const glm::vec4& color);
     glm::mat4 proj;

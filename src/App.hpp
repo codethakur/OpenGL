@@ -24,7 +24,6 @@ struct ObjectControl
     float angle = 0.0f;
     
 };
-
 class UIWindow; 
 
 class App {
