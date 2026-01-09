@@ -8,6 +8,16 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 
+
+
+struct TriangleInstance {
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
+    glm::vec4 color;
+};
+
+
 struct ScreenObjeect
 {
     Graphicsengine::ObjectId id;
@@ -34,7 +44,7 @@ public:
 
     std::vector<ScreenObjeect> objects;
     std::vector<ObjectControl> controls;
-    float musicVolume = 0.50f;
+    float musicVolume = 0.01f;
 
 private:
     void initAudio();
@@ -47,6 +57,7 @@ private:
 
     std::shared_ptr<UIWindow> uiRoot;
     Graphicsengine* gfx = nullptr;
+    std::vector<TriangleInstance> triangles;
 
     void initWindow();
     void initGL();
@@ -70,8 +81,6 @@ private:
     float objectBrightness = 1.0f;
     float backgroundBrightness = 1.0f;
     float r = 0.0f, increment = 0.05f;
-    ImVec4 clearColor = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
-    
-
+    ImVec4 clearColor = ImVec4(0.0f, 0.907f, 0.702f, 0.1f);
 
 };

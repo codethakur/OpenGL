@@ -32,12 +32,14 @@ public:
 UIObjectListPanel(
         std::vector<ScreenObjeect>* objs,
         std::vector<ObjectControl>* ctrls,
+         std::vector<TriangleInstance>* tris,
         ImVec4* clr,
         float* objBrightness,
         float* bgBrightness
     )
         : objects(objs),
           controls(ctrls),
+          triangles(tris),       
           objectBrightness(objBrightness),
           backgroundBrightness(bgBrightness),
           clearColor(clr)
@@ -56,6 +58,7 @@ UIObjectListPanel(
 private:
     std::vector<ScreenObjeect>* objects;
     std::vector<ObjectControl>* controls;
+    std::vector<TriangleInstance>* triangles;
     float* objectBrightness;       
     float* backgroundBrightness;   
     ImVec4* clearColor;

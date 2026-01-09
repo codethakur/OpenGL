@@ -32,21 +32,18 @@ Shader::shaderProgrammingSources Shader::parseShader(const std::string &filepath
 
     while (std::getline(stream, line))
     {
-        if (line.find("shader") != std::string::npos)
+        if (line.find("#shader") != std::string::npos)
         {
             if (line.find("vertex") != std::string::npos)
-            {
                 type = shaderTypes::VERTEX;
-            }
             else if (line.find("fragment") != std::string::npos)
-            {
                 type = shaderTypes::FRAGMENT;
-            }
         }
-        else
+        else if (type != shaderTypes::NONE)
         {
-            ss[(int)type] << line << "\n";
+            ss[(int)type] << line << '\n';
         }
+
     }
     return {ss[0].str(), ss[1].str()};
 }
@@ -139,7 +136,7 @@ void Shader::setUniformMat4f(const std::string &name, const glm::mat4 &matrix)
 {
     GLint loc = getUniformLocation(name);
     if (loc == -1)
-    {
+    {  
         Console::LOGN(std::string("setUniformMat4f: uniform '") + name + std::string("' not found"), Color::RED);
         return;
     }

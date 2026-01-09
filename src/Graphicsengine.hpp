@@ -20,8 +20,9 @@ public:
 
     using ObjectId = uint32_t;
 
-    ObjectId createCube(const std::string& texturePath);
-    ObjectId createTriangle(const std::string& texturePath);
+    void drawTriangle(const glm::mat4& model,
+                      const glm::vec4& color);
+
     
     void draw(ObjectId id, const glm::mat4& model, const glm::vec4& color = glm::vec4(1.0f));
     void clear(const glm::vec4& color);
@@ -30,6 +31,11 @@ public:
 
 
 private:
+    void initTriangle();
+    VertexArray* triangleVAO = nullptr;
+    VertexBuffer* triangleVB = nullptr;
+    IndexBuffer* triangleIB = nullptr;
+    
     struct Buffer {
         VertexArray* vao;
         VertexBuffer* vb;
@@ -38,9 +44,9 @@ private:
     };
 
     std::unordered_map<ObjectId, Buffer> buffersMap;
-    ObjectId nextId = 1;
 
     Shader* shader = nullptr;
     Renderer* renderer = nullptr;
-   
+    Texture* texture;
+    bool triangleInitialized = false;
 };

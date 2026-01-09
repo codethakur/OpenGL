@@ -18,7 +18,7 @@ void UIWindow::render()
     {
 
         ImGui::SliderFloat("Music Volume", &app.musicVolume, 0.0f, 1.0f);
-
+    Mix_VolumeMusic(static_cast<int>(app.musicVolume * 128.0f));
         ImGui::Separator();
 
         for (auto &c : children)
@@ -30,38 +30,19 @@ void UIWindow::render()
 
 void UIObjectListPanel::render()
 {
-    if (!objects || !controls)
-        return;
     if (ImGui::Button("Cube"))
     {
         if (onAddObject)
             onAddObject();
-            
     }
-    ImGui::SameLine();
-   
-    if (ImGui::Button("Tringle"))
+    if (!triangles->empty())
     {
-        if (onAddObject)
-            onAddObject();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Circle"))
-    {
-        if (onAddObject)
-            onAddObject();
-    }
-    
-    ImGui::SameLine();
-    if (objects->size()>0)
-    {
-        if (ImGui::Button("Remove  Object"))
-        {
-            if (onRemoveLast)
-                onRemoveLast();
-        }
+        ImGui::SliderFloat("Triangle X", &(*triangles)[0].position.x, -1.0f, 1.0f);
+        ImGui::SliderFloat("Triangle Y", &(*triangles)[0].position.y, -1.0f, 1.0f);
     }
 
+    if (!objects || !controls)
+        return;
     ImGui::Separator();
 
     for (size_t i = 0; i < controls->size(); ++i)

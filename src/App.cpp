@@ -15,15 +15,12 @@
 #include "Console.hpp"
 #include "ImGuiUI.hpp"
 #include "App.hpp"
-#include "primitives/cube.hpp"
-
-
 
 App::App()
 {
     initWindow();
     initGL();
-    initAudio(); 
+    initAudio();
     initImGui();
     initImGuiWindow();
     loadResources();
@@ -39,7 +36,7 @@ void App::run()
 {
     while (!glfwWindowShouldClose(window))
     {
-        
+
         glfwPollEvents();
         update();
         render();
@@ -52,7 +49,7 @@ void App::initWindow()
 {
     if (!glfwInit())
     {
-        std::cerr << "GLFW init failed\n";
+        Console::LOGN("GLFW init failed", Color::RED);
         return;
     }
 
@@ -60,6 +57,10 @@ void App::initWindow()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_CORE_PROFILE, GLFW_TRUE);
     
+    #ifdef __APPLE__
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #endif
+
     App::window = glfwCreateWindow(940, 680, "OpenGL Window", NULL, NULL);
     if (!window)
     {
@@ -84,7 +85,11 @@ void App::initGL()
     }
 
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  //  glDisable(GL_CULL_FACE);
 }
 
 void App::initImGui()
@@ -97,38 +102,19 @@ void App::initImGui()
     mainImGuiContext = ImGui::GetCurrentContext();
 
     uiRoot = std::make_shared<UIWindow>("Object Editor", *this);
-    auto objPanel = std::make_shared<UIObjectListPanel>(&objects, &controls, &clearColor, &objectBrightness, &backgroundBrightness);
+    auto objPanel = std::make_shared<UIObjectListPanel>(
+        &objects, &controls, &triangles, &clearColor, &objectBrightness, &backgroundBrightness);
 
-    // objPanel->onAddCube = [this]()
-    // {
-    //     ScreenObjeect o;
-    //     o.id = gfx->createCube("res/textures/codethakur.png");
-    //     o.model = glm::mat4(1.0f);
-    //     o.color = glm::vec4(1.0f);
-    //     objects.push_back(o);
-
-
-    //     ObjectControl c;
-    //     const float offset = 0.5f * float(objects.size() - 1);
-    //     c.moveX = -1.5f + offset;
-    //     c.moveY = 0.0f;
-    //     c.rotatespeed = 0.0f;
-    //     c.angle = 0.0f;
-    //     controls.push_back(c);
-    // };
     objPanel->onAddObject = [this]()
-{
-    Cube cube;
-    cube.build(objects, *gfx);
+    {
+        TriangleInstance t;
+        t.position = {0.0f, 0.0f, 0.0f};
+        t.rotation = {0.0f, 0.0f, 0.0f};
+        t.scale = {1.0f, 1.0f, 1.0f};
+        t.color = {1.0f, 1.0f, 1.0f, 1.0f};
 
-    ObjectControl c;
-    c.moveX = 0.4f * controls.size(); // spread cubes
-    c.moveY = 0.0f;
-    c.rotatespeed = 0.0f;
-    c.angle = 0.0f;
-
-    controls.push_back(c);
-};
+        triangles.push_back(t);
+    };
 
     objPanel->onRemoveLast = [this]()
     {
@@ -151,7 +137,7 @@ void App::initImGui()
 
         objectBrightness = 1.0f;
         backgroundBrightness = 1.0f;
-        clearColor = ImVec4(0.71f, 0.74f, 0.76f, 1.00f);
+        clearColor = ImVec4(0.744f, 0.907f, 0.702f, 1.0f);
     };
 
     uiRoot->add(objPanel);
@@ -213,45 +199,31 @@ void App::loadResources()
 
     objectBrightness = 1.0f;
     backgroundBrightness = 1.0f;
-
-    // // TEMP: build initial cube once
-    // Cube cube;
-    // cube.build(objects, *gfx);
 }
-
 
 void App::render()
 {
     ImVec4 adjustedClear = clearColor * backgroundBrightness;
-    int sdlVolume = static_cast<int>(musicVolume * MIX_MAX_VOLUME);
-    Mix_VolumeMusic(sdlVolume);
-    gfx->clear(glm::vec4(adjustedClear.x, adjustedClear.y, adjustedClear.z, adjustedClear.w));
+    gfx->clear(glm::vec4(
+        adjustedClear.x,
+        adjustedClear.y,
+        adjustedClear.z,
+        adjustedClear.w));
 
-   size_t controlIndex = 0;
+    float time = (float)glfwGetTime();
 
-for (size_t i = 0; i < objects.size(); ++i)
-{
-    const ObjectControl& c = controls[controlIndex];
+    for (auto &t : triangles)
+    {
+        glm::mat4 model = glm::mat4(1.0f);
 
-    glm::mat4 transform =
-        glm::translate(glm::mat4(1.0f),
-                       glm::vec3(c.moveX, c.moveY, 0.0f));
+        model = glm::translate(model, t.position);
+        model = glm::rotate(model, time, {0, 1, 0});
+        model = glm::scale(model, t.scale);
 
-    transform =
-        glm::rotate(transform,
-                    c.angle,
-                    glm::vec3(0, 1, 0));
-
-    gfx->draw(objects[i].id,
-              transform * objects[i].model,
-              objects[i].color);
-
-    // 1 cube = 6 faces = 1 control
-    if ((i + 1) % 6 == 0)
-        controlIndex++;
+        gfx->drawTriangle(model, t.color);
+    }
 }
 
-}
 glm::vec2 App::screenToWorld(double mx, double my)
 {
     int width, height;
@@ -265,14 +237,13 @@ glm::vec2 App::screenToWorld(double mx, double my)
 
 void App::update()
 {
-    
+
     r += increment;
     if (r > 1.0f || r < 0.0f)
         increment = -increment;
-    for (auto& o : objects)
+    for (auto &t : triangles)
     {
-        if (o.isCubeFace)
-            o.color = {1.0f, r, 0.0f, 1.0f};
+        t.color = {1.0f, r, 0.0f, 1.0f};
     }
     ImGui::SetCurrentContext(mainImGuiContext);
     ImGuiIO io = ImGui::GetIO();
@@ -285,22 +256,20 @@ void App::update()
 
     bool mouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 
-    const float cubeHalf = 0.5f;
+    const float triHalf = 0.2f;
 
     if (!dragging && mouseDown)
     {
-        for (int i = int(controls.size()) - 1; i >= 0; --i)
+        for (int i = int(triangles.size()) - 1; i >= 0; --i)
         {
-            float x = controls[i].moveX;
-            float y = controls[i].moveY;
+            glm::vec3 p = triangles[i].position;
 
-            if (mouseWorld.x > x - cubeHalf && mouseWorld.x < x + cubeHalf &&
-                mouseWorld.y > y - cubeHalf && mouseWorld.y < y + cubeHalf)
-
+            if (mouseWorld.x > p.x - triHalf && mouseWorld.x < p.x + triHalf &&
+                mouseWorld.y > p.y - triHalf && mouseWorld.y < p.y + triHalf)
             {
                 dragging = true;
                 draggedIndex = i;
-                dragOffset = mouseWorld - glm::vec2(x, y);
+                dragOffset = mouseWorld - glm::vec2(p.x, p.y);
                 break;
             }
         }
@@ -315,22 +284,13 @@ void App::update()
         }
         else
         {
-            controls[draggedIndex].moveX = mouseWorld.x - dragOffset.x;
-            controls[draggedIndex].moveY = mouseWorld.y - dragOffset.y;
+            triangles[draggedIndex].position.x = mouseWorld.x - dragOffset.x;
+            triangles[draggedIndex].position.y = mouseWorld.y - dragOffset.y;
         }
     }
 
     ObjectControl &c = controls[0];
     c.angle += c.rotatespeed;
-
-    cubeTransform =
-        glm::translate(glm::mat4(1.0f),
-                       glm::vec3(c.moveX, c.moveY, 0.0f));
-
-    cubeTransform =
-        glm::rotate(cubeTransform,
-                    c.angle,
-                    glm::vec3(0, 1, 0));
 }
 void App::initAudio()
 {
@@ -339,16 +299,18 @@ void App::initAudio()
     Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
 
     backgroundMusic = Mix_LoadMUS("res/gamemusic-6082.mp3");
-    if (!backgroundMusic) {
-        std::cout << "Audio load failed\n";
+    if (!backgroundMusic)
+    {
+        Console::LOGN( "Audio load failed", Color::RED);
         return;
     }
 
-    Mix_PlayMusic(backgroundMusic, -1); 
+    Mix_PlayMusic(backgroundMusic, -1);
 }
 void App::shutdownAudio()
 {
-    if (backgroundMusic) {
+    if (backgroundMusic)
+    {
         Mix_FreeMusic(backgroundMusic);
         backgroundMusic = nullptr;
     }

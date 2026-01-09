@@ -1,119 +1,137 @@
 #include "Graphicsengine.hpp"
-#include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "vendor/glm/gtc/matrix_transform.hpp"
 
-Graphicsengine::Graphicsengine(GLFWwindow *window)
+// ------------------------------------------------------------
+// Constructor
+// ------------------------------------------------------------
+Graphicsengine::Graphicsengine(GLFWwindow* window)
 {
-    shader = new Shader("res/shaders/Basic.shader");
+    shader   = new Shader("res/shaders/Basic.shader");
+    texture  = new Texture("res/textures/codethakur.png");
     renderer = new Renderer();
 
-    int width = 1, height = 1;
+    // ✅ REQUIRED FOR 3D
+    glEnable(GL_DEPTH_TEST);
+
+    int width, height;
     glfwGetFramebufferSize(window, &width, &height);
+
     float aspect = (float)width / (float)height;
+    proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
-    proj = glm::perspective(
-        glm::radians(45.0f),
-        aspect,
-        0.1f,
-        100.0f);
-
-    view = glm::translate(
-        glm::mat4(1.0f),
-        glm::vec3(0.0f, 0.0f, -3.0f));
-
-    shader->Bind();
-    shader->setUniform1i("u_Texture", 0);
+    view = glm::translate(glm::mat4(1.0f),
+                          glm::vec3(0.0f, 0.0f, -3.0f));
 }
 
+// ------------------------------------------------------------
+// Destructor
+// ------------------------------------------------------------
 Graphicsengine::~Graphicsengine()
 {
-    for (auto &kv : buffersMap)
-    {
-        auto &b = kv.second;
-        delete b.vb;
-        delete b.ib;
-        delete b.vao;
-        delete b.texture;
-    }
-    buffersMap.clear();
+    delete triangleVAO;
+    delete triangleVB;
+    delete triangleIB;
 
+    delete texture;
     delete shader;
     delete renderer;
 }
 
-Graphicsengine::ObjectId Graphicsengine::createCube(const std::string &texturePath)
+// ------------------------------------------------------------
+// Init cube (24 vertices, ALL faces textured)
+// ------------------------------------------------------------
+void Graphicsengine::initTriangle()
 {
-    float h = 0.2f; // half size
+    if (triangleInitialized)
+        return;
 
-    float positions[] = {
-        // x      y      z      u     v
-        -h, -h, 0.0f, 0.0f, 0.0f,
-        h, -h, 0.0f, 1.0f, 0.0f,
-        h, h, 0.0f, 1.0f, 1.0f,
-        -h, h, 0.0f, 0.0f, 1.0f};
+    float vertices[] = {
+        // ---------- FRONT ----------
+        -0.3f,-0.3f, 0.3f,  0.0f,0.0f,
+         0.3f,-0.3f, 0.3f,  1.0f,0.0f,
+         0.3f, 0.3f, 0.3f,  1.0f,1.0f,
+        -0.3f, 0.3f, 0.3f,  0.0f,1.0f,
 
-    unsigned indices[] = {0, 1, 2, 2, 3, 0};
+        // ---------- BACK ----------
+         0.3f,-0.3f,-0.3f,  0.0f,0.0f,
+        -0.3f,-0.3f,-0.3f,  1.0f,0.0f,
+        -0.3f, 0.3f,-0.3f,  1.0f,1.0f,
+         0.3f, 0.3f,-0.3f,  0.0f,1.0f,
 
-    auto *vao = new VertexArray();
-    auto *vb = new VertexBuffer(positions, sizeof(positions));
-    auto *ib = new IndexBuffer(indices, 6);
+        // ---------- LEFT ----------
+        -0.3f,-0.3f,-0.3f,  0.0f,0.0f,
+        -0.3f,-0.3f, 0.3f,  1.0f,0.0f,
+        -0.3f, 0.3f, 0.3f,  1.0f,1.0f,
+        -0.3f, 0.3f,-0.3f,  0.0f,1.0f,
+
+        // ---------- RIGHT ----------
+         0.3f,-0.3f, 0.3f,  0.0f,0.0f,
+         0.3f,-0.3f,-0.3f,  1.0f,0.0f,
+         0.3f, 0.3f,-0.3f,  1.0f,1.0f,
+         0.3f, 0.3f, 0.3f,  0.0f,1.0f,
+
+        // ---------- TOP ----------
+        -0.3f, 0.3f, 0.3f,  0.0f,0.0f,
+         0.3f, 0.3f, 0.3f,  1.0f,0.0f,
+         0.3f, 0.3f,-0.3f,  1.0f,1.0f,
+        -0.3f, 0.3f,-0.3f,  0.0f,1.0f,
+
+        // ---------- BOTTOM ----------
+        -0.3f,-0.3f,-0.3f,  0.0f,0.0f,
+         0.3f,-0.3f,-0.3f,  1.0f,0.0f,
+         0.3f,-0.3f, 0.3f,  1.0f,1.0f,
+        -0.3f,-0.3f, 0.3f,  0.0f,1.0f
+    };
+
+    unsigned int indices[] = {
+         0,  1,  2,  2,  3,  0,
+         4,  5,  6,  6,  7,  4,
+         8,  9, 10, 10, 11,  8,
+        12, 13, 14, 14, 15, 12,
+        16, 17, 18, 18, 19, 16,
+        20, 21, 22, 22, 23, 20
+    };
+
+    triangleVAO = new VertexArray();
+    triangleVB  = new VertexBuffer(vertices, sizeof(vertices));
+    triangleIB  = new IndexBuffer(indices, 36);
 
     VertexBufferLayout layout;
-    layout.Push<float>(3);
-    layout.Push<float>(2);
-    vao->addBuffer(*vb, layout);
+    layout.Push<float>(3); // position
+    layout.Push<float>(2); // texcoord
 
-    auto *tex = new Texture(texturePath);
+    triangleVAO->addBuffer(*triangleVB, layout);
 
-    ObjectId id = nextId++;
-    buffersMap[id] = {vao, vb, ib, tex};
-    return id;
-}
-Graphicsengine::ObjectId
-Graphicsengine::createTriangle(const std::string &texturePath)
-{
-    float positions[] =
-        {
-            0.0f,    0.25f,   0.0f, 0.5f, 1.0f,
-           -0.30f,  -0.30f,   0.0f, 0.0f, 0.0f,
-            0.30f, - 0.30f,   0.0f, 1.0f, 0.0f };
-        unsigned indices[] = {0, 1, 2};
-
-        auto*vao = new VertexArray();
-        auto*vb =  new VertexBuffer(positions, sizeof(positions));
-        auto* ib = new IndexBuffer(indices, 3);
-        VertexBufferLayout layout;
-        layout.Push<float>(3);
-        layout.Push<float>(2);
-        vao->addBuffer(*vb, layout);
-
-        auto tex = new Texture(texturePath);
-        ObjectId id= nextId++;
-        buffersMap[id] = {vao, vb, ib, tex};
-        return id;
+    triangleInitialized = true;
 }
 
-void Graphicsengine::draw(ObjectId id, const glm::mat4 &model, const glm::vec4 &color)
+// ------------------------------------------------------------
+// Draw cube
+// ------------------------------------------------------------
+void Graphicsengine::drawTriangle(const glm::mat4& model,
+                                  const glm::vec4& color)
 {
-    auto it = buffersMap.find(id);
-    if (it == buffersMap.end())
-        return;
-    auto &m = it->second;
+    initTriangle();
 
     glm::mat4 mvp = proj * view * model;
 
     shader->Bind();
-    shader->setUniform1i("u_Texture", 0);
     shader->setUniformMat4f("u_MVP", mvp);
-    shader->setUniform4f("u_Color", color.r, color.g, color.b, color.a);
+   shader->setUniform4f("u_Color", color.r, color.g, color.b, color.a);
 
-    m.texture->Bind(0);
-    renderer->Draw(*m.vao, *m.ib, *shader);
+    shader->setUniform1i("u_Texture", 0);
+
+    texture->Bind(0);
+
+    renderer->Draw(*triangleVAO, *triangleIB, *shader);
 }
 
-void Graphicsengine::clear(const glm::vec4 &color)
+// ------------------------------------------------------------
+// Clear
+// ------------------------------------------------------------
+void Graphicsengine::clear(const glm::vec4& color)
 {
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
