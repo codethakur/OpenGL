@@ -31,6 +31,7 @@ void Texture::Bind(unsigned int slot) const {
 }
 
 
+
 void Texture::UnBind() const {
     glBindTexture(GL_TEXTURE_2D, 0);
 }

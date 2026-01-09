@@ -49,41 +49,41 @@ void Graphicsengine::initTriangle()
 
     float vertices[] = {
         // ---------- FRONT ----------
-        -0.3f,-0.3f, 0.3f,  0.0f,0.0f,
-         0.3f,-0.3f, 0.3f,  1.0f,0.0f,
-         0.3f, 0.3f, 0.3f,  1.0f,1.0f,
-        -0.3f, 0.3f, 0.3f,  0.0f,1.0f,
+        -0.3f,-0.3f, 0.3f,  -0.2f,-0.2f,
+        0.3f,-0.3f, 0.3f,   1.2f,-0.2f,
+        0.3f, 0.3f, 0.3f,   1.2f, 1.2f,
+        -0.3f, 0.3f, 0.3f,  -0.2f, 1.2f,
 
         // ---------- BACK ----------
-         0.3f,-0.3f,-0.3f,  0.0f,0.0f,
-        -0.3f,-0.3f,-0.3f,  1.0f,0.0f,
-        -0.3f, 0.3f,-0.3f,  1.0f,1.0f,
-         0.3f, 0.3f,-0.3f,  0.0f,1.0f,
+         0.3f,-0.3f,-0.3f,  -0.2f,-0.2f,
+        -0.3f,-0.3f,-0.3f,  1.2f,-0.2f,
+        -0.3f, 0.3f,-0.3f,  1.2f, 1.2f,
+         0.3f, 0.3f,-0.3f,  -0.2f, 1.2f,
 
         // ---------- LEFT ----------
-        -0.3f,-0.3f,-0.3f,  0.0f,0.0f,
-        -0.3f,-0.3f, 0.3f,  1.0f,0.0f,
-        -0.3f, 0.3f, 0.3f,  1.0f,1.0f,
-        -0.3f, 0.3f,-0.3f,  0.0f,1.0f,
+        -0.3f,-0.3f,-0.3f,  -0.2f,-0.2f,
+        -0.3f,-0.3f, 0.3f,  1.2f,-0.2f,
+        -0.3f, 0.3f, 0.3f,  1.2f, 1.2f,
+        -0.3f, 0.3f,-0.3f,  -0.2f, 1.2f,
 
         // ---------- RIGHT ----------
-         0.3f,-0.3f, 0.3f,  0.0f,0.0f,
-         0.3f,-0.3f,-0.3f,  1.0f,0.0f,
-         0.3f, 0.3f,-0.3f,  1.0f,1.0f,
-         0.3f, 0.3f, 0.3f,  0.0f,1.0f,
+         0.3f,-0.3f, 0.3f,  -0.2f,-0.2f,
+         0.3f,-0.3f,-0.3f,  1.2f,-0.2f,
+         0.3f, 0.3f,-0.3f,  1.2f, 1.2f,
+         0.3f, 0.3f, 0.3f,  -0.2f, 1.2f,
 
         // ---------- TOP ----------
-        -0.3f, 0.3f, 0.3f,  0.0f,0.0f,
-         0.3f, 0.3f, 0.3f,  1.0f,0.0f,
-         0.3f, 0.3f,-0.3f,  1.0f,1.0f,
-        -0.3f, 0.3f,-0.3f,  0.0f,1.0f,
+        -0.3f, 0.3f, 0.3f,  -0.2f,-0.2f,
+         0.3f, 0.3f, 0.3f,  1.2f,-0.2f,
+         0.3f, 0.3f,-0.3f,  1.2f, 1.2f,
+        -0.3f, 0.3f,-0.3f,  -0.2f, 1.2f,
 
         // ---------- BOTTOM ----------
-        -0.3f,-0.3f,-0.3f,  0.0f,0.0f,
-         0.3f,-0.3f,-0.3f,  1.0f,0.0f,
-         0.3f,-0.3f, 0.3f,  1.0f,1.0f,
-        -0.3f,-0.3f, 0.3f,  0.0f,1.0f
-    };
+        -0.3f,-0.3f,-0.3f,  -0.2f,-0.2f,
+         0.3f,-0.3f,-0.3f,  1.2f,-0.2f,
+         0.3f,-0.3f, 0.3f,  1.2f, 1.2f,
+        -0.3f,-0.3f, 0.3f,  -0.2f, 1.2f,    }
+        ;
 
     unsigned int indices[] = {
          0,  1,  2,  2,  3,  0,
@@ -125,8 +125,17 @@ void Graphicsengine::drawTriangle(const glm::mat4& model,
 
     texture->Bind(0);
 
+    float borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     renderer->Draw(*triangleVAO, *triangleIB, *shader);
 }
+
+
+
+
 
 // ------------------------------------------------------------
 // Clear
@@ -136,3 +145,4 @@ void Graphicsengine::clear(const glm::vec4& color)
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
+
