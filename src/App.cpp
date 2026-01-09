@@ -137,7 +137,7 @@ void App::initImGui()
 
         objectBrightness = 1.0f;
         backgroundBrightness = 1.0f;
-        clearColor = ImVec4(0.744f, 0.907f, 0.702f, 1.0f);
+        clearColor = ImVec4(0.0f, 0.907f, 0.702f, 0.1f);
     };
 
     uiRoot->add(objPanel);
@@ -243,7 +243,7 @@ void App::update()
         increment = -increment;
     for (auto &t : triangles)
     {
-        t.color = {1.0f, r, 0.0f, 1.0f};
+        t.color = {0.744f, 0.907f, 0.702f, 1.0f};
     }
     ImGui::SetCurrentContext(mainImGuiContext);
     ImGuiIO io = ImGui::GetIO();

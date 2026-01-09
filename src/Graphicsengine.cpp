@@ -125,7 +125,7 @@ void Graphicsengine::drawTriangle(const glm::mat4& model,
 
     texture->Bind(0);
 
-    float borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    float borderColor[] = { 0.744f, 0.907f, 0.702f, 1.0f};
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
