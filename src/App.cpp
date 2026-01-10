@@ -114,6 +114,11 @@ void App::initImGui()
         t.color = {1.0f, 1.0f, 1.0f, 1.0f};
 
         triangles.push_back(t);
+        controls.push_back(ObjectControl{
+        0.0f,  // moveX
+        0.0f,  // moveY
+        0.0f   // rotate speed
+    });
     };
 
     objPanel->onRemoveLast = [this]()
@@ -194,12 +199,12 @@ void App::loadResources()
     gfx = new Graphicsengine(window);
 
     objects.clear();
-    controls.clear();
-    controls.resize(1);
+    controls.clear();   // ← NOTHING ELSE
 
     objectBrightness = 1.0f;
     backgroundBrightness = 1.0f;
 }
+
 
 void App::render()
 {
@@ -212,16 +217,18 @@ void App::render()
 
     float time = (float)glfwGetTime();
 
-    for (auto &t : triangles)
+    for (size_t i = 0; i < triangles.size(); ++i)
     {
-        glm::mat4 model = glm::mat4(1.0f);
+        auto& t = triangles[i];
 
+        glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, t.position);
-        model = glm::rotate(model, time, {0, 1, 0});
+        model = glm::rotate(model, controls[i].angle, {0, 1, 0});
         model = glm::scale(model, t.scale);
 
         gfx->drawTriangle(model, t.color);
     }
+
 }
 
 glm::vec2 App::screenToWorld(double mx, double my)
@@ -257,6 +264,11 @@ void App::update()
     bool mouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 
     const float triHalf = 0.2f;
+    for (size_t i = 0; i < triangles.size(); ++i)
+    {
+        triangles[i].position.x = controls[i].moveX;
+        triangles[i].position.y = controls[i].moveY;
+    }
 
     if (!dragging && mouseDown)
     {
@@ -289,8 +301,11 @@ void App::update()
         }
     }
 
-    ObjectControl &c = controls[0];
-    c.angle += c.rotatespeed;
+   
+    for (size_t i = 0; i < controls.size(); ++i)
+    {
+        controls[i].angle += controls[i].rotatespeed;
+    }
 }
 void App::initAudio()
 {

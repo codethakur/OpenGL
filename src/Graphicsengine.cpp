@@ -122,20 +122,9 @@ void Graphicsengine::drawTriangle(const glm::mat4& model,
    shader->setUniform4f("u_Color", color.r, color.g, color.b, color.a);
 
     shader->setUniform1i("u_Texture", 0);
-
     texture->Bind(0);
-
-    float borderColor[] = { 0.744f, 0.907f, 0.702f, 1.0f};
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     renderer->Draw(*triangleVAO, *triangleIB, *shader);
 }
-
-
-
-
 
 // ------------------------------------------------------------
 // Clear

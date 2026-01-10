@@ -18,7 +18,7 @@ void UIWindow::render()
     {
 
         ImGui::SliderFloat("Music Volume", &app.musicVolume, 0.0f, 1.0f);
-    Mix_VolumeMusic(static_cast<int>(app.musicVolume * 128.0f));
+        Mix_VolumeMusic(static_cast<int>(app.musicVolume * 128.0f));
         ImGui::Separator();
 
         for (auto &c : children)
@@ -35,45 +35,30 @@ void UIObjectListPanel::render()
         if (onAddObject)
             onAddObject();
     }
-    if (!triangles->empty())
-    {
-        ImGui::SliderFloat("Triangle X", &(*triangles)[0].position.x, -1.0f, 1.0f);
-        ImGui::SliderFloat("Triangle Y", &(*triangles)[0].position.y, -1.0f, 1.0f);
-    }
 
-    if (!objects || !controls)
-        return;
+   if (!controls || controls->empty())
+    return;
+
     ImGui::Separator();
 
     for (size_t i = 0; i < controls->size(); ++i)
     {
         std::string title = "Object " + std::to_string(i + 1) + " Controls";
         ImGui::Text("%s", title.c_str());
-        if(objects->size()>0)
-        {
 
-        
         ImGui::SliderFloat(("Move X##" + std::to_string(i)).c_str(),
-                           &(*controls)[i].moveX, -1.3120f, 1.312f);
+                        &(*controls)[i].moveX, -1.3120f, 1.312f);
+
         ImGui::SliderFloat(("Move Y##" + std::to_string(i)).c_str(),
-                           &(*controls)[i].moveY, -0.853f, 0.853f);
+                        &(*controls)[i].moveY, -0.853f, 0.853f);
+
         ImGui::SliderFloat(("Rotate Speed##" + std::to_string(i)).c_str(),
-                           &(*controls)[i].rotatespeed, -1.0f, 1.0f);
-
-        ImGui::SameLine();
-        if (ImGui::Button(("Reset##" + std::to_string(i)).c_str()))
-        {
-            (*controls)[i].moveX = (i == 0 ? -1.5f : 0.0f);
-            (*controls)[i].moveY = 0.0f;
-            (*controls)[i].rotatespeed = 0.0f;
-            (*controls)[i].angle = 0.0f;
-
-            (*objects)[i].model = glm::mat4(1.0f);
-        }
-    }
+                        &(*controls)[i].rotatespeed, -1.0f, 1.0f);
 
         ImGui::Separator();
     }
+
+
     ImGui::SliderFloat(
         "Object Brightness",
         objectBrightness,
